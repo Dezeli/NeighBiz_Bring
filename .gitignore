@@ -1,0 +1,112 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Django
+*.log
+*.pot
+*.pyc
+*.mo
+*.pyo
+*.sqlite3
+db.sqlite3
+instance/
+local_settings.py
+.env
+.env.*
+.vscode/
+.idea/
+*.sentry-debug.json
+
+# Django migrations
+*/migrations/__pycache__/
+*/migrations/*.pyc
+*/migrations/*.pyo
+
+# Media & static
+/media
+/staticfiles
+/static_root
+/media_root
+
+# Virtual Environments
+venv/
+ENV/
+env/
+.venv/
+.ENV/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints
+
+# pytest
+.pytest_cache/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Coverage
+.coverage
+coverage.xml
+htmlcov/
+
+# pip-tools
+*.txt~
+
+# AWS
+*.pem
+
+# Docker
+*.pid
+*.tar
+*.lock
+docker-compose.override.yml
+
+# Docker volumes
+volumes/
+postgres-data/
+pgdata/
+redis-data/
+
+# React / Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# React build
+build/
+dist/
+*.cache
+.cache/
+*.tgz
+*.env.local
+*.env.development.local
+*.env.test.local
+*.env.production.local
+
+# Nginx (if mounted configs/logs)
+nginx/conf.d/*.conf~
+nginx/logs/
+
+# Editor/IDE
+.vscode/
+.idea/
+
+# Misc
+*.bak
+*.swp
+*.tmp
+
+# MkDocs
+site/
