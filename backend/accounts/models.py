@@ -3,6 +3,7 @@ from django.db import models
 from django.utils import timezone
 from django.conf import settings
 
+
 class UserManager(BaseUserManager):
     def create_user(self, phone_number, password=None, **extra_fields):
         if not phone_number:
@@ -21,7 +22,7 @@ class UserManager(BaseUserManager):
 class User(AbstractBaseUser, PermissionsMixin):
     ROLE_CHOICES = (
         ("owner", "사장님"),
-        ("guest", "소비자"),
+        ("guest", "게스트"),
     )
 
     phone_number = models.CharField(max_length=20, unique=True)
@@ -60,8 +61,21 @@ class VerificationCode(models.Model):
     
 
 class RefreshToken(models.Model):
+    SESSION_SCOPE_CHOICES = (
+        ("guest", "게스트"),
+        ("owner", "사장님"),
+    )
+
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     token = models.CharField(max_length=255, unique=True)
+
+    session_scope = models.CharField(
+        max_length=10,
+        choices=SESSION_SCOPE_CHOICES,
+        default="guest",
+        db_index=True
+    )
+
     device_info = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()
@@ -71,4 +85,4 @@ class RefreshToken(models.Model):
         return self.revoked or timezone.now() > self.expires_at
 
     def __str__(self):
-        return f"{self.user.phone_number} - {self.device_info or 'Unknown Device'}"
+        return f"{self.user.phone_number} - {self.session_scope} - {self.device_info or 'Unknown Device'}"

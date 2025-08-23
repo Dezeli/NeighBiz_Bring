@@ -15,6 +15,21 @@ class VerificationCodeAdmin(admin.ModelAdmin):
 
 @admin.register(RefreshToken)
 class RefreshTokenAdmin(admin.ModelAdmin):
-    list_display = ["user", "device_info", "created_at", "expires_at", "revoked"]
-    list_filter = ["revoked", "created_at"]
-    search_fields = ["user__phone_number", "device_info"]
+    list_display = [
+        "user",
+        "session_scope",
+        "device_info",
+        "created_at",
+        "expires_at",
+        "revoked",
+    ]
+    list_filter = [
+        "revoked",
+        "session_scope",
+        "created_at",
+    ]
+    search_fields = [
+        "user__phone_number",
+        "device_info",
+    ]
+    ordering = ["-created_at"]

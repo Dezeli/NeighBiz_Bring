@@ -2,12 +2,14 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from utils.response import success, failure
 from .services import send_verification_code, verify_code_and_get_or_create_user
+from .tokens import issue_tokens_for_user
 from rest_framework import status
-from .serializers import VerifyCodeSerializer
+from .serializers import VerifyCodeSerializer, OwnerSignupSerializer, OwnerLoginSerializer
 from accounts.throttles import DailyPhoneNumberThrottle
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.views import TokenRefreshView
 from accounts.models import RefreshToken as StoredRefreshToken
+from rest_framework_simplejwt.tokens import RefreshToken as SimpleRefreshToken
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.exceptions import InvalidToken
 from django.utils import timezone
@@ -44,7 +46,9 @@ class VerifyCodeView(APIView):
         code = serializer.validated_data["code"]
 
         try:
-            user, tokens = verify_code_and_get_or_create_user(phone_number, code)
+            user, _ = verify_code_and_get_or_create_user(phone_number, code)
+            tokens = issue_tokens_for_user(user, request=request, session_scope="guest")
+
             data = {
                 "user": {
                     "id": user.id,
@@ -57,24 +61,22 @@ class VerifyCodeView(APIView):
         except Exception as e:
             return Response(failure(message=str(e), error_code="VALIDATION_ERROR"), status=400)
 
-
 class MeView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        u = request.user
+        user = request.user
         data = {
-            "user_id": u.id,
-            "phone_number": getattr(u, "phone_number", None),
-            "role": getattr(u, "role", "guest"),
+            "id": user.id,
+            "phone_number": user.phone_number,
+            "role": user.role,
         }
-        return Response(success(data=data))
+        return Response(success(data=data, message="사용자 정보가 반환되었습니다."))
     
 
 class CustomTokenRefreshView(TokenRefreshView):
     def post(self, request, *args, **kwargs):
         refresh_token = request.data.get("refresh")
-        print("✅ 클라이언트에서 받은 refresh 토큰:", refresh_token)
 
         if not refresh_token:
             raise AuthenticationFailed("refresh 토큰이 필요합니다.")
@@ -91,6 +93,15 @@ class CustomTokenRefreshView(TokenRefreshView):
             raise AuthenticationFailed("유효하지 않은 토큰입니다.")
 
         try:
+            decoded_token = SimpleRefreshToken(refresh_token)
+            role_in_token = decoded_token.get("role", None)
+        except Exception:
+            raise AuthenticationFailed("refresh 토큰 디코딩 실패")
+
+        if token_obj.session_scope != role_in_token:
+            raise AuthenticationFailed("토큰 역할이 일치하지 않습니다.")
+
+        try:
             response = super().post(request, *args, **kwargs)
             if response.status_code == 200:
                 return Response(success(data=response.data, message="토큰 재발급 성공"))
@@ -98,9 +109,10 @@ class CustomTokenRefreshView(TokenRefreshView):
         except InvalidToken as e:
             return Response(failure(message="유효하지 않은 토큰입니다.", data=e.detail), status=401)
 
+
     
 class LogoutView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = []
 
     def post(self, request):
         refresh_token = request.data.get("refresh")
@@ -108,9 +120,30 @@ class LogoutView(APIView):
             return Response(failure("refresh 토큰이 필요합니다.", "VALIDATION_ERROR"), status=400)
 
         try:
-            token_obj = StoredRefreshToken.objects.get(user=request.user, token=refresh_token)
+            token_obj = StoredRefreshToken.objects.get(token=refresh_token)
             token_obj.revoked = True
             token_obj.save()
             return Response(success(message="해당 기기에서 로그아웃되었습니다."))
         except StoredRefreshToken.DoesNotExist:
             return Response(failure("등록되지 않은 refresh 토큰입니다.", "INVALID_REFRESH"), status=400)
+
+        
+
+class OwnerSignupView(APIView):
+    def post(self, request):
+        serializer = OwnerSignupSerializer(data=request.data)
+        if serializer.is_valid():
+            data = serializer.save()
+            return Response(success(data=data, message="사장님 회원가입이 완료되었습니다."))
+        return Response(failure(message="회원가입에 실패했습니다.", data=serializer.errors))
+    
+
+
+
+class OwnerLoginView(APIView):
+    def post(self, request):
+        serializer = OwnerLoginSerializer(data=request.data, context={"request": request})
+        if serializer.is_valid():
+            data = serializer.save()
+            return Response(success(data=data, message="로그인에 성공했습니다."))
+        return Response(failure(message="로그인에 실패했습니다.", data=serializer.errors))
