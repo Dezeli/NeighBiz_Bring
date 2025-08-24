@@ -106,8 +106,8 @@ REST_FRAMEWORK = {
 }
 
 # STATIC/MEDIA
-STATIC_URL = "/static/"
-STATIC_ROOT = BASE_DIR / "staticfiles"
+STATIC_URL = "/backend-static/"
+STATIC_ROOT = "/app/staticfiles"
 
 # CORS
 CORS_ALLOW_ALL_ORIGINS = config("CORS_ALLOW_ALL_ORIGINS", default=False, cast=bool)
