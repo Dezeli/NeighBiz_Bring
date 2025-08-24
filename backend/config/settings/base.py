@@ -1,7 +1,9 @@
 from pathlib import Path
 from decouple import config, Csv
+from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
+APP_BASE_URL = config("APP_BASE_URL", "http://127.0.0.1:8000")
 
 # SECURITY
 SECRET_KEY = config("DJANGO_SECRET_KEY")
@@ -20,6 +22,8 @@ DJANGO_APPS = [
 
 THIRD_PARTY_APPS = [
     "rest_framework",
+    "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
 ]
 
@@ -95,6 +99,10 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.AllowAny",
     ),
     "EXCEPTION_HANDLER": "utils.exceptions.custom_exception_handler",
+    "DEFAULT_THROTTLE_CLASSES": [],
+    "DEFAULT_THROTTLE_RATES": {
+        "daily_phone": "10/day",
+    },
 }
 
 # STATIC/MEDIA
@@ -113,3 +121,25 @@ USE_TZ = True
 
 # DEFAULT FIELD
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+# Solapi
+SOLAPI_API_KEY = config("SOLAPI_API_KEY").strip()
+SOLAPI_API_SECRET = config("SOLAPI_API_SECRET").strip()
+SOLAPI_SENDER_NUMBER = config("SOLAPI_SENDER_NUMBER").strip()
+
+# AWS S3
+AWS_ACCESS_KEY_ID = config("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = config("AWS_SECRET_ACCESS_KEY")
+AWS_REGION = config("AWS_REGION", "ap-northeast-2")
+AWS_S3_BUCKET = config("AWS_S3_BUCKET")
+AWS_S3_PRESIGNED_EXPIRES = int(config("AWS_S3_PRESIGNED_EXPIRES", "300"))
+
+#SIMPLE JWT
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
+    "ROTATE_REFRESH_TOKENS": False,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "AUTH_HEADER_TYPES": ("Bearer",),
+}

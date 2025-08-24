@@ -1,6 +1,6 @@
 from django.db import models
 from merchants.models import Merchant
-from partnerships.models import Partnership
+from partnerships.models import Partnership, Post
 from accounts.models import User
 
 
@@ -8,6 +8,12 @@ class CouponPolicy(models.Model):
     merchant = models.ForeignKey(Merchant, on_delete=models.CASCADE)
     partnership = models.ForeignKey(Partnership, on_delete=models.CASCADE, null=True, blank=True)
     description = models.TextField()
+    expected_value = models.PositiveIntegerField(default=0)
+    expected_duration = models.CharField(
+        max_length=20,
+        choices=Post.DURATION_CHOICES,
+        default="unlimited"
+    )
     valid_from = models.DateField(null=True, blank=True)
     valid_until = models.DateField(null=True, blank=True)
     daily_limit = models.PositiveIntegerField(null=True, blank=True)

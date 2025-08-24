@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.hashers import make_password
 from accounts.models import User
 
 
@@ -22,6 +23,13 @@ class Merchant(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     deleted_at = models.DateTimeField(null=True, blank=True)
+
+    
+    username = models.CharField(max_length=50, unique=True, null=True, blank=True)
+    password = models.CharField(max_length=128, default="neighbiz")
+
+    def set_password(self, raw_password):
+        self.password = make_password(raw_password)
 
     def __str__(self):
         return self.name
