@@ -3,11 +3,9 @@ import { useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import PhoneAuthModal from '../components/PhoneAuthModal';
 
-
 const IssuePage = () => {
   const { slug } = useParams();
   const { user, login, apiCall } = useAuth();
-
 
   const [couponData, setCouponData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -15,7 +13,34 @@ const IssuePage = () => {
   const [showPhoneAuth, setShowPhoneAuth] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
 
+  // ✅ 쿠폰 불러오기
+  const loadCoupon = async () => {
+    if (!slug) {
+      setError('잘못된 QR 코드입니다.');
+      return;
+    }
 
+    try {
+      setLoading(true);
+      setError('');
+      const response = await apiCall({ method: 'GET', url: `/issue/${slug}/` });
+      if (response.success) {
+        setCouponData(response.data);
+      } else {
+        setError('쿠폰을 불러오는데 실패했습니다.');
+      }
+    } catch (err) {
+      if (err.message.includes('login required')) {
+        setShowPhoneAuth(true);
+      } else {
+        setError(err.message || '쿠폰 발급 중 오류가 발생했습니다.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ 페이지 진입 시 쿠폰 로드
   useEffect(() => {
     const checkAuthAndLoadCoupon = async () => {
       setPageLoading(true);
@@ -28,44 +53,14 @@ const IssuePage = () => {
     };
 
     checkAuthAndLoadCoupon();
-  }, [user, loadCoupon]);
+  }, [user, slug]); // loadCoupon은 넣지 말기 (useCallback 안 했으니까)
 
-
-  const loadCoupon = async () => {
-    if (!slug) {
-      setError('잘못된 QR 코드입니다.');
-      return;
-  }
-
-
-  setLoading(true);
-  setError('');
-
-
-  try {
-    const response = await apiCall({ method: 'GET', url: `/issue/${slug}/` });
-    if (response.success) {
-      setCouponData(response.data);
-    } else {
-      setError('쿠폰을 불러오는데 실패했습니다.');
-    }
-    } catch (err) {
-      if (err.message.includes('login required')) {
-        setShowPhoneAuth(true);
-      } else {
-        setError(err.message || '쿠폰 발급 중 오류가 발생했습니다.');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-
+  // ✅ 쿠폰 사용
   const useCoupon = async () => {
     if (!couponData) return;
+
     setLoading(true);
     setError('');
-
 
     try {
       const response = await apiCall({ method: 'POST', url: `/use/${couponData.coupon_id}/` });
@@ -82,30 +77,28 @@ const IssuePage = () => {
     }
   };
 
-
+  // ✅ 전화번호 인증 성공 후 처리
   const handlePhoneAuthSuccess = async (access, refresh) => {
     try {
       await login(access, refresh);
       setShowPhoneAuth(false);
-      await loadCoupon();
+      await loadCoupon(); // 인증 성공 후 쿠폰 다시 불러오기
     } catch (error) {
       setError('로그인 처리 중 오류가 발생했습니다.');
     }
   };
 
-
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-      return date.toLocaleString('ko-KR', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
+    return date.toLocaleString('ko-KR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     });
   };
 
-  // 페이지 로딩 중
   if (pageLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
@@ -124,7 +117,6 @@ const IssuePage = () => {
     );
   }
 
-  // 휴대폰 인증 모달이 활성화된 경우
   if (showPhoneAuth) {
     return (
       <>
