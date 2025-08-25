@@ -1,6 +1,4 @@
-// utils/response.ts
-
-export const extractErrorMessage = (resData: any): string => {
+export const extractErrorMessage = (resData) => {
   if (!resData) return '에러 응답이 없습니다.';
 
   return (

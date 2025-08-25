@@ -5,10 +5,10 @@ import { useAuth } from '../context/AuthContext';
 const CouponSetupPage = () => {
   const navigate = useNavigate();
   const { apiCall } = useAuth();
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  
+
   const [formData, setFormData] = useState({
     description: '',
     expected_value: '',
@@ -19,19 +19,18 @@ const CouponSetupPage = () => {
     total_limit: '',
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
     setError('');
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
 
     try {
-      // 숫자 필드 변환
       const submitData = {
         ...formData,
         expected_value: parseInt(formData.expected_value),
@@ -51,7 +50,7 @@ const CouponSetupPage = () => {
       } else {
         setError('쿠폰 정책 등록에 실패했습니다.');
       }
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || '쿠폰 정책 등록 중 오류가 발생했습니다.');
     } finally {
       setIsLoading(false);
@@ -68,7 +67,6 @@ const CouponSetupPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4">
       <div className="max-w-md mx-auto">
-        {/* 헤더 */}
         <div className="text-center mb-8">
           <button
             onClick={() => navigate('/owner/mypage')}
@@ -77,7 +75,7 @@ const CouponSetupPage = () => {
             <span className="mr-2">←</span>
             마이페이지로 돌아가기
           </button>
-          
+
           <div className="w-20 h-20 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
             <span className="text-3xl text-white">🎫</span>
           </div>
@@ -85,10 +83,8 @@ const CouponSetupPage = () => {
           <p className="text-gray-500">고객에게 제공할 쿠폰의 조건을 설정해주세요</p>
         </div>
 
-        {/* 폼 */}
         <div className="bg-white rounded-3xl shadow-xl p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* 쿠폰 설명 */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 📝 쿠폰 설명 *
@@ -104,7 +100,6 @@ const CouponSetupPage = () => {
               />
             </div>
 
-            {/* 쿠폰 가치 */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 💰 예상 가치 (원) *
@@ -121,7 +116,6 @@ const CouponSetupPage = () => {
               />
             </div>
 
-            {/* 유효 기간 */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 ⏰ 예상 지속 기간 *
@@ -133,7 +127,7 @@ const CouponSetupPage = () => {
                 className="w-full h-14 px-4 border border-gray-200 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors bg-white"
                 required
               >
-                {durationOptions.map(option => (
+                {durationOptions.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
                   </option>
@@ -141,7 +135,6 @@ const CouponSetupPage = () => {
               </select>
             </div>
 
-            {/* 유효 날짜 범위 */}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -156,7 +149,7 @@ const CouponSetupPage = () => {
                   required
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   📅 종료일 *
@@ -172,10 +165,9 @@ const CouponSetupPage = () => {
               </div>
             </div>
 
-            {/* 제한 설정 */}
             <div className="bg-gray-50 rounded-xl p-4 space-y-4">
               <h3 className="font-semibold text-gray-800 mb-3">📊 발급 제한 설정</h3>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   📈 일일 발급 제한 *
@@ -220,7 +212,6 @@ const CouponSetupPage = () => {
               </div>
             )}
 
-            {/* 제출 버튼 */}
             <button
               type="submit"
               disabled={isLoading}
@@ -240,7 +231,6 @@ const CouponSetupPage = () => {
             </button>
           </form>
 
-          {/* 안내 메시지 */}
           <div className="mt-6 bg-blue-50 border border-blue-200 rounded-xl p-4">
             <div className="flex items-start">
               <span className="text-blue-500 mr-2 mt-0.5">💡</span>

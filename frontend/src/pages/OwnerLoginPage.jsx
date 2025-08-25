@@ -12,7 +12,7 @@ const OwnerLoginPage = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
@@ -27,9 +27,8 @@ const OwnerLoginPage = () => {
 
       const { access, refresh } = res.data.data;
       await login(access, refresh);
-
       navigate('/owner/mypage');
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || '로그인에 실패했습니다. 다시 시도해주세요.');
     } finally {
       setIsLoading(false);

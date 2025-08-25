@@ -2,16 +2,10 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-interface PartnershipInfo {
-  merchant_name: string;
-  partnership_status: 'none' | 'pending' | 'active';
-  qr_image_url: string | null;
-}
-
 const OwnerMyPage = () => {
   const navigate = useNavigate();
   const { user, logout, apiCall } = useAuth();
-  const [partnership, setPartnership] = useState<PartnershipInfo | null>(null);
+  const [partnership, setPartnership] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -71,17 +65,13 @@ const OwnerMyPage = () => {
             <span className="text-2xl text-gray-400">❌</span>
           </div>
           <h3 className="text-lg font-semibold text-gray-800 mb-2">정보 로드 실패</h3>
-          <p className="text-gray-500 text-sm">
-            가게 정보를 불러올 수 없습니다.
-          </p>
+          <p className="text-gray-500 text-sm">가게 정보를 불러올 수 없습니다.</p>
         </div>
       );
     }
 
-    // partnership_status에 따른 처리
     switch (partnership.partnership_status) {
       case 'active':
-        // 제휴 활성화 상태 - QR 코드 표시
         return (
           <div className="text-center">
             <div className="mb-4">
@@ -94,15 +84,15 @@ const OwnerMyPage = () => {
               </h2>
               <p className="text-gray-500 text-sm mb-4">제휴가 활성화되었습니다</p>
             </div>
-            
+
             {partnership.qr_image_url && (
               <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl p-6">
                 <p className="text-sm text-gray-600 mb-3">고객용 QR 코드</p>
                 <div className="bg-white p-4 rounded-xl inline-block shadow-sm">
-                  <img 
-                    src={partnership.qr_image_url} 
-                    alt="QR 코드" 
-                    className="w-40 h-40 rounded-lg" 
+                  <img
+                    src={partnership.qr_image_url}
+                    alt="QR 코드"
+                    className="w-40 h-40 rounded-lg"
                   />
                 </div>
                 <p className="text-xs text-gray-500 mt-3">
@@ -114,7 +104,6 @@ const OwnerMyPage = () => {
         );
 
       case 'pending':
-        // 제휴 대기중 상태
         return (
           <div className="text-center py-8">
             <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -134,7 +123,6 @@ const OwnerMyPage = () => {
 
       case 'none':
       default:
-        // 제휴 없음 상태 - 쿠폰 정책 설정 버튼 표시
         return (
           <div className="text-center py-8">
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -145,8 +133,7 @@ const OwnerMyPage = () => {
               {partnership.merchant_name}<br />
               먼저 쿠폰 정책을 설정해보세요.
             </p>
-            
-            {/* 쿠폰 정책 설정 버튼 */}
+
             <button
               onClick={() => window.location.href = '/owner/coupon-setup'}
               className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
@@ -189,7 +176,7 @@ const OwnerMyPage = () => {
               </div>
               <h1 className="text-2xl font-bold text-gray-800 mb-2">사장님 마이페이지</h1>
             </div>
-            
+
             <div className="bg-gray-50 rounded-xl p-4 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-500">📱 전화번호</span>
@@ -207,7 +194,7 @@ const OwnerMyPage = () => {
             {renderPartnershipContent()}
           </div>
 
-          {/* 로그아웃 버튼 */}
+          {/* 로그아웃 */}
           <button
             onClick={handleLogout}
             className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold py-4 rounded-2xl shadow-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
@@ -217,9 +204,7 @@ const OwnerMyPage = () => {
 
           {/* 푸터 */}
           <div className="text-center mt-6">
-            <p className="text-xs text-gray-400">
-              네이비즈 소상공인 제휴 플랫폼
-            </p>
+            <p className="text-xs text-gray-400">네이비즈 소상공인 제휴 플랫폼</p>
           </div>
         </div>
       </div>

@@ -50,7 +50,6 @@ function App() {
           </PrivateRoute>
         }
       />
-      {/* 소비자용 QR 스캔 페이지 - 인증 불필요 */}
       <Route path="/issue/:slug" element={<IssuePage />} />
     </Routes>
   );

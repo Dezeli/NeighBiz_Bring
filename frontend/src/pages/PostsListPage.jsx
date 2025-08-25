@@ -2,28 +2,11 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-interface Author {
-  id: number;
-  name: string;
-  category: string;
-}
-
-interface Post {
-  id: number;
-  title: string;
-  description: string;
-  expected_value: number;
-  expected_duration: string;
-  status: string;
-  created_at: string;
-  author: Author;
-}
-
 const PostsListPage = () => {
   const navigate = useNavigate();
   const { apiCall } = useAuth();
   
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -35,7 +18,7 @@ const PostsListPage = () => {
           url: '/posts/',
         });
         setPosts(response);
-      } catch (err: any) {
+      } catch (err) {
         setError('게시글을 불러오는데 실패했습니다.');
       } finally {
         setLoading(false);
@@ -45,8 +28,8 @@ const PostsListPage = () => {
     fetchPosts();
   }, [apiCall]);
 
-  const formatDuration = (duration: string) => {
-    const durationMap: { [key: string]: string } = {
+  const formatDuration = (duration) => {
+    const durationMap = {
       '1_month': '1개월',
       '3_months': '3개월',
       '6_months': '6개월',
@@ -55,11 +38,11 @@ const PostsListPage = () => {
     return durationMap[duration] || duration;
   };
 
-  const formatPrice = (price: number) => {
+  const formatPrice = (price) => {
     return price.toLocaleString('ko-KR');
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('ko-KR', {
       year: 'numeric',
@@ -68,8 +51,8 @@ const PostsListPage = () => {
     });
   };
 
-  const getCategoryIcon = (category: string) => {
-    const categoryIcons: { [key: string]: string } = {
+  const getCategoryIcon = (category) => {
+    const categoryIcons = {
       cafe: '☕',
       restaurant: '🍽️',
       beauty: '💄',
@@ -78,8 +61,8 @@ const PostsListPage = () => {
     return categoryIcons[category] || '🏪';
   };
 
-  const getCategoryName = (category: string) => {
-    const categoryNames: { [key: string]: string } = {
+  const getCategoryName = (category) => {
+    const categoryNames = {
       cafe: '카페',
       restaurant: '식당',
       beauty: '미용',

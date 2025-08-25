@@ -5,9 +5,9 @@ const REFRESH_TOKEN_KEY = 'refreshToken';
 const BASE_URL = 'http://localhost:8000/api/v1';
 
 class TokenManager {
-  private static instance: TokenManager;
-  private refreshing = false;
-  private refreshPromise: Promise<string | null> | null = null;
+  static instance = null;
+  refreshing = false;
+  refreshPromise = null;
 
   static getInstance() {
     if (!TokenManager.instance) {
@@ -16,25 +16,25 @@ class TokenManager {
     return TokenManager.instance;
   }
 
-  getAccessToken(): string | null {
+  getAccessToken() {
     return localStorage.getItem(ACCESS_TOKEN_KEY);
   }
 
-  getRefreshToken(): string | null {
+  getRefreshToken() {
     return localStorage.getItem(REFRESH_TOKEN_KEY);
   }
 
-  saveTokens(access: string, refresh: string): void {
+  saveTokens(access, refresh) {
     localStorage.setItem(ACCESS_TOKEN_KEY, access);
     localStorage.setItem(REFRESH_TOKEN_KEY, refresh);
   }
 
-  clearTokens(): void {
+  clearTokens() {
     localStorage.removeItem(ACCESS_TOKEN_KEY);
     localStorage.removeItem(REFRESH_TOKEN_KEY);
   }
 
-  async refreshAccessToken(): Promise<string | null> {
+  async refreshAccessToken() {
     if (this.refreshing && this.refreshPromise) {
       return this.refreshPromise;
     }
@@ -56,7 +56,7 @@ class TokenManager {
     }
   }
 
-  private async _doRefresh(refreshToken: string): Promise<string | null> {
+  async _doRefresh(refreshToken) {
     try {
       const response = await axios.post(`${BASE_URL}/auth/refresh`, {
         refresh: refreshToken,
@@ -67,15 +67,15 @@ class TokenManager {
         localStorage.setItem(ACCESS_TOKEN_KEY, newAccessToken);
         return newAccessToken;
       }
-      
+
       return null;
     } catch (error) {
       return null;
     }
   }
 
-  async makeAuthenticatedRequest<T = any>(config: any): Promise<T> {
-    const makeRequest = async (token: string) => {
+  async makeAuthenticatedRequest(config) {
+    const makeRequest = async (token) => {
       return axios({
         ...config,
         baseURL: BASE_URL,
@@ -87,11 +87,10 @@ class TokenManager {
     };
 
     let accessToken = this.getAccessToken();
-    
-    // access token이 없으면 바로 갱신 시도
+
     if (!accessToken) {
       accessToken = await this.refreshAccessToken();
-      
+
       if (!accessToken) {
         throw new Error('No access token available and refresh failed');
       }
@@ -100,25 +99,22 @@ class TokenManager {
     try {
       const response = await makeRequest(accessToken);
       return response.data;
-    } catch (error: any) {
-      // 401 에러가 아니면 바로 throw
+    } catch (error) {
       if (error.response?.status !== 401) {
         throw error;
       }
 
-      // 토큰 갱신 시도
       const newAccessToken = await this.refreshAccessToken();
-      
+
       if (!newAccessToken) {
         this.clearTokens();
         throw new Error('Token refresh failed - login required');
       }
 
-      // 새 토큰으로 재시도
       try {
         const retryResponse = await makeRequest(newAccessToken);
         return retryResponse.data;
-      } catch (retryError: any) {
+      } catch (retryError) {
         if (retryError.response?.status === 401) {
           this.clearTokens();
           throw new Error('Authentication failed - login required');

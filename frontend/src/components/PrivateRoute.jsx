@@ -1,13 +1,7 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 
-interface PrivateRouteProps {
-  isAuthenticated: boolean;
-  loading: boolean;
-  children: React.ReactNode;
-}
-
-const PrivateRoute = ({ isAuthenticated, loading, children }: PrivateRouteProps) => {
+const PrivateRoute = ({ isAuthenticated, loading, children }) => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">

@@ -3,65 +3,54 @@ import { useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import PhoneAuthModal from '../components/PhoneAuthModal';
 
-interface CouponData {
-  coupon_id: number;
-  status: 'active' | 'used';
-  issued_at: string;
-  partner_store: string;
-  description: string;
-}
 
 const IssuePage = () => {
-  const { slug } = useParams<{ slug: string }>();
+  const { slug } = useParams();
   const { user, login, apiCall } = useAuth();
-  
-  const [couponData, setCouponData] = useState<CouponData | null>(null);
+
+
+  const [couponData, setCouponData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPhoneAuth, setShowPhoneAuth] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
 
-  // 페이지 진입 시 인증 상태 확인
+
   useEffect(() => {
     const checkAuthAndLoadCoupon = async () => {
       setPageLoading(true);
-      
       if (user) {
-        // 이미 로그인된 상태면 바로 쿠폰 로드
         await loadCoupon();
       } else {
-        // 비로그인 상태면 폰 인증 모달 표시
         setShowPhoneAuth(true);
       }
-      
       setPageLoading(false);
     };
+
 
     checkAuthAndLoadCoupon();
   }, [user]);
 
-  // 쿠폰 발급/조회 API
+
   const loadCoupon = async () => {
     if (!slug) {
       setError('잘못된 QR 코드입니다.');
       return;
+  }
+
+
+  setLoading(true);
+  setError('');
+
+
+  try {
+    const response = await apiCall({ method: 'GET', url: `/issue/${slug}/` });
+    if (response.success) {
+      setCouponData(response.data);
+    } else {
+      setError('쿠폰을 불러오는데 실패했습니다.');
     }
-
-    setLoading(true);
-    setError('');
-
-    try {
-      const response = await apiCall({
-        method: 'GET',
-        url: `/issue/${slug}/`,
-      });
-
-      if (response.success) {
-        setCouponData(response.data);
-      } else {
-        setError('쿠폰을 불러오는데 실패했습니다.');
-      }
-    } catch (err: any) {
+    } catch (err) {
       if (err.message.includes('login required')) {
         setShowPhoneAuth(true);
       } else {
@@ -72,53 +61,48 @@ const IssuePage = () => {
     }
   };
 
-  // 쿠폰 사용 API
+
   const useCoupon = async () => {
     if (!couponData) return;
-
     setLoading(true);
     setError('');
 
-    try {
-      const response = await apiCall({
-        method: 'POST',
-        url: `/use/${couponData.coupon_id}/`,
-      });
 
+    try {
+      const response = await apiCall({ method: 'POST', url: `/use/${couponData.coupon_id}/` });
       if (response.success) {
-        // 쿠폰 상태를 'used'로 업데이트
         setCouponData(prev => prev ? { ...prev, status: 'used' } : null);
         alert('🎉 쿠폰이 사용 완료되었습니다!');
       } else {
         setError('쿠폰 사용에 실패했습니다.');
       }
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message || '쿠폰 사용 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }
   };
 
-  // 휴대폰 인증 완료 후 처리
-  const handlePhoneAuthSuccess = async (access: string, refresh: string) => {
+
+  const handlePhoneAuthSuccess = async (access, refresh) => {
     try {
       await login(access, refresh);
       setShowPhoneAuth(false);
-      // 로그인 후 쿠폰 로드
       await loadCoupon();
     } catch (error) {
       setError('로그인 처리 중 오류가 발생했습니다.');
     }
   };
 
-  const formatDate = (dateString: string) => {
+
+  const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleString('ko-KR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+      return date.toLocaleString('ko-KR', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
     });
   };
 

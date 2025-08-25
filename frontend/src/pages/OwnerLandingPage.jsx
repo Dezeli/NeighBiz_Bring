@@ -28,7 +28,7 @@ const OwnerLandingPage = () => {
         </button>
         <button
           onClick={() => navigate('/signup')}
-          className="w-full h-12 bg-blue-600 text-white rounded-lg text-lg hover:bg-blue-700 transition"
+          className="w-full h-12 bg-blue-600 text-white rounded-lg text-lg hover:bg-blue-700 transition mt-3"
         >
           회원가입하기
         </button>

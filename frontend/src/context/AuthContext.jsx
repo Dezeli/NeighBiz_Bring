@@ -1,34 +1,14 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import TokenManager from '../utils/TokenManager';
 
-type Role = 'guest' | 'owner' | null;
+const AuthContext = createContext(undefined);
 
-interface AuthUser {
-  user_id: number;
-  phone_number: string;
-  role: Role;
-}
-
-interface AuthContextType {
-  user: AuthUser | null;
-  role: Role;
-  isAuthenticated: boolean;
-  isGuest: boolean;
-  isOwner: boolean;
-  loading: boolean;
-  login: (access: string, refresh: string) => Promise<void>;
-  logout: () => Promise<void>;
-  apiCall: <T = any>(config: any) => Promise<T>;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<AuthUser | null>(null);
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const tokenManager = TokenManager.getInstance();
 
-  const fetchUser = useCallback(async (): Promise<void> => {
+  const fetchUser = useCallback(async () => {
     try {
       const response = await tokenManager.makeAuthenticatedRequest({
         method: 'GET',
@@ -40,17 +20,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       } else {
         setUser(null);
       }
-    } catch (error: any) {
+    } catch (error) {
       if (error.message.includes('login required')) {
         setUser(null);
       }
     }
   }, [tokenManager]);
 
-  const apiCall = useCallback(async <T = any>(config: any): Promise<T> => {
+  const apiCall = useCallback(async (config) => {
     try {
-      return await tokenManager.makeAuthenticatedRequest<T>(config);
-    } catch (error: any) {
+      return await tokenManager.makeAuthenticatedRequest(config);
+    } catch (error) {
       if (error.message.includes('login required')) {
         setUser(null);
       }
@@ -58,7 +38,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [tokenManager]);
 
-  const login = useCallback(async (access: string, refresh: string) => {
+  const login = useCallback(async (access, refresh) => {
     try {
       tokenManager.saveTokens(access, refresh);
       await fetchUser();
@@ -80,7 +60,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             data: { refresh: refreshToken },
           });
         } catch (e) {
-          // 로그아웃 API 실패 무시
+          // 로그아웃 실패 무시
         }
       }
     } finally {
@@ -92,18 +72,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const initAuth = async () => {
       const refreshToken = tokenManager.getRefreshToken();
-      
       if (refreshToken) {
         await fetchUser();
       }
-      
       setLoading(false);
     };
 
     initAuth();
   }, [fetchUser, tokenManager]);
 
-  const contextValue: AuthContextType = {
+  const contextValue = {
     user,
     role: user?.role || null,
     isAuthenticated: !!user,
