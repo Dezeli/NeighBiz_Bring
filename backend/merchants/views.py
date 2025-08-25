@@ -11,6 +11,8 @@ from django.db.models import Q
 from merchants.models import Merchant
 from partnerships.models import Partnership
 from .serializers import MyPageQRSerializer
+import io
+import qrcode
 
 
 
@@ -58,6 +60,21 @@ class MerchantImageUploadPresignedURLView(APIView):
     
 
 
+def _generate_qr_png_bytes(url: str) -> bytes:
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(url)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    return buf.getvalue()
+
+
 class MyMerchantPageView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -78,9 +95,11 @@ class MyMerchantPageView(APIView):
 
         if partnership:
             slug = partnership.slug_for_a if partnership.merchant_a == merchant else partnership.slug_for_b
-            filename = f"qrcodes/{slug}.png"
+            key = f"qrcodes/{slug}.png"
 
-            s3_client = boto3.client(
+            issue_url = f"{settings.APP_BASE_URL}/issue/{slug}"
+
+            s3 = boto3.client(
                 "s3",
                 aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
                 aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
@@ -89,19 +108,38 @@ class MyMerchantPageView(APIView):
                 config=Config(signature_version="s3v4"),
             )
 
+            def object_exists():
+                try:
+                    s3.head_object(Bucket=settings.AWS_S3_BUCKET, Key=key)
+                    return True
+                except ClientError as e:
+                    if e.response.get("ResponseMetadata", {}).get("HTTPStatusCode") == 404:
+                        return False
+                    raise
+
             try:
-                qr_image_url = s3_client.generate_presigned_url(
+                if not object_exists():
+                    png_bytes = _generate_qr_png_bytes(issue_url)
+                    s3.put_object(
+                        Bucket=settings.AWS_S3_BUCKET,
+                        Key=key,
+                        Body=png_bytes,
+                        ContentType="image/png",
+                        CacheControl="public, max-age=31536000",
+                    )
+
+                qr_image_url = s3.generate_presigned_url(
                     "get_object",
-                    Params={"Bucket": settings.AWS_S3_BUCKET, "Key": filename},
+                    Params={"Bucket": settings.AWS_S3_BUCKET, "Key": key},
                     ExpiresIn=3600,
                 )
-            except Exception as e:
-                return Response(failure(message="QR 이미지 URL 생성 실패", data=str(e)))
+
+            except ClientError as e:
+                return Response(failure(message="QR 이미지 처리 실패", data=str(e)))
 
         serializer = MyPageQRSerializer({
             "merchant_name": merchant.name,
             "partnership_status": partnership_status,
             "qr_image_url": qr_image_url,
         })
-
         return Response(success(serializer.data, "마이페이지 정보 반환 성공"))
