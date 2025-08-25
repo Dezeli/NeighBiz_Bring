@@ -27,9 +27,8 @@ const IssuePage = () => {
       setPageLoading(false);
     };
 
-
     checkAuthAndLoadCoupon();
-  }, [user]);
+  }, [user, loadCoupon]);
 
 
   const loadCoupon = async () => {
