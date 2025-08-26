@@ -13,7 +13,6 @@ const IssuePage = () => {
   const [showPhoneAuth, setShowPhoneAuth] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
 
-  // ✅ 쿠폰 불러오기
   const loadCoupon = async () => {
     if (!slug) {
       setError('잘못된 QR 코드입니다.');
