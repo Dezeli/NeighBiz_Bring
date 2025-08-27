@@ -7,5 +7,5 @@ urlpatterns = [
     path('api/v1/', include('merchants.urls')),
     path('api/v1/', include('partnerships.urls')),
     path('api/v1/', include('coupons.urls')),
-    # path('api/v1/', include('events.urls')),
+    path('api/v1/', include('events.urls')),
 ]

@@ -31,19 +31,27 @@ class Post(models.Model):
 
 
 class Proposal(models.Model):
-    STATUS_CHOICES = (
-        ("pending", "대기중"),
-        ("accepted", "수락됨"),
-        ("rejected", "거절됨"),
-    )
-
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
     proposer_merchant = models.ForeignKey(Merchant, on_delete=models.CASCADE)
+    
+    policy = models.ForeignKey("coupons.CouponPolicy", on_delete=models.CASCADE, null=True)
+
     description = models.TextField()
-    offered_value = models.PositiveIntegerField()
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+    offered_value = models.IntegerField()
+
+    ProposalStatus = (
+        ("pending", "제휴 요청 중"),
+        ("accepted", "제휴 승낙"),
+        ("rejected", "제휴 거절"),
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=ProposalStatus,
+        default="pending"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
-    deleted_at = models.DateTimeField(null=True, blank=True)
+    deleted_at = models.DateTimeField(null=True)
 
 
 class Partnership(models.Model):
