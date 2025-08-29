@@ -12,13 +12,13 @@ services:
     env_file:
       - .env
 
-  frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile.frontend
-    ports:
-      - "80:80"
-    depends_on:
-      - backend
-    volumes:
-      - ./backend/staticfiles:/app/staticfiles
+  # frontend:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.frontend
+  #   ports:
+  #     - "80:80"
+  #   depends_on:
+  #     - backend
+  #   volumes:
+  #     - ./backend/staticfiles:/app/staticfiles
