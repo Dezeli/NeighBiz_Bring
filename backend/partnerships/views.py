@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from coupons.models import CouponPolicy
 from utils.response import success, failure
 from merchants.models import Merchant
+from django.db import transaction
 from django.utils import timezone
 from django.db.models import Q
 
@@ -227,21 +228,27 @@ class RespondToProposalView(APIView):
         if action not in ["accept", "reject"]:
             return Response(failure(message="action 값은 'accept' 또는 'reject'여야 합니다.", error_code="INVALID_ACTION"), status=400)
 
+        # 내 가맹점
         try:
             my_merchant = Merchant.objects.get(user=user, deleted_at__isnull=True)
         except Merchant.DoesNotExist:
             return Response(failure(message="가맹점 정보를 찾을 수 없습니다.", error_code="MERCHANT_NOT_FOUND"), status=404)
 
+        # 제안서
         try:
-            proposal = Proposal.objects.select_related("post", "proposer_merchant", "policy").get(id=proposal_id, deleted_at__isnull=True)
+            proposal = (
+                Proposal.objects
+                .select_related("post", "proposer_merchant", "policy")
+                .get(id=proposal_id, deleted_at__isnull=True)
+            )
         except Proposal.DoesNotExist:
             return Response(failure(message="제안서를 찾을 수 없습니다.", error_code="PROPOSAL_NOT_FOUND"), status=404)
 
-        # 글 작성자가 맞는지 확인
+        # 내 글에 온 제안만 처리 가능
         if proposal.post.author_merchant != my_merchant:
             return Response(failure(message="본인의 게시글에 대한 제안만 수락/거절할 수 있습니다.", error_code="FORBIDDEN"), status=403)
 
-        # 이미 처리된 상태인지 확인
+        # 이미 처리됨 방지
         if proposal.status in ["accepted", "rejected"]:
             return Response(failure(message="이미 처리된 제안입니다.", error_code="ALREADY_HANDLED"), status=400)
 
@@ -250,37 +257,77 @@ class RespondToProposalView(APIView):
             proposal.save()
             return Response(success(message="제안을 거절했습니다."))
 
-        # 수락 처리
-        # 1. 글 작성자의 정책
-        try:
-            policy_a = CouponPolicy.objects.get(merchant=my_merchant, deleted_at__isnull=True)
-        except CouponPolicy.DoesNotExist:
-            return Response(failure(message="정책 정보를 찾을 수 없습니다.", error_code="POLICY_NOT_FOUND"), status=404)
+        # ===== 수락 처리 (원자적) =====
+        with transaction.atomic():
+            # 1) 정책잠금 (각 1개 전제)
+            try:
+                policy_a = CouponPolicy.objects.select_for_update().get(
+                    merchant=my_merchant, deleted_at__isnull=True
+                )
+            except CouponPolicy.DoesNotExist:
+                return Response(failure(message="정책 정보를 찾을 수 없습니다.", error_code="POLICY_NOT_FOUND"), status=404)
 
-        # 2. 제안자의 정책
-        policy_b = proposal.policy
+            policy_b = proposal.policy
+            if policy_b is None or policy_b.deleted_at is not None:
+                return Response(failure(message="제안자의 정책 정보를 찾을 수 없습니다.", error_code="PROPOSER_POLICY_NOT_FOUND"), status=404)
 
-        # 3. Partnership 생성
-        partnership = Partnership.objects.create(
-            merchant_a=my_merchant,
-            merchant_b=proposal.proposer_merchant,
-            post=proposal.post,
-            proposal=proposal,
-            start_date=timezone.now().date(),
-            status="active"
-        )
+            # 2) 게시글잠금 (각 1개 전제) — 내 글은 proposal.post로 이미 보유
+            # 작성자(나) 글
+            author_post = (
+                Post.objects.select_for_update()
+                .get(id=proposal.post.id, deleted_at__isnull=True)
+            )
+            # 제안자 글 (정확히 1개 존재 보장)
+            try:
+                proposer_post = (
+                    Post.objects.select_for_update()
+                    .get(author_merchant=proposal.proposer_merchant, deleted_at__isnull=True)
+                )
+            except Post.DoesNotExist:
+                return Response(failure(message="제안자 게시글이 존재하지 않습니다.", error_code="PROPOSER_POST_NOT_FOUND"), status=404)
 
-        # 4. 정책에 partnership 연결
-        policy_a.partnership = partnership
-        policy_b.partnership = partnership
-        policy_a.save()
-        policy_b.save()
+            # 3) 상태 가드: 둘 다 open이어야 수락 가능(운영정책에 맞게 조정)
+            if author_post.status != "open":
+                return Response(failure(message="작성자 게시글이 수락 가능한 상태가 아닙니다.", error_code="AUTHOR_POST_NOT_OPEN"), status=409)
+            if proposer_post.status != "open":
+                return Response(failure(message="제안자 게시글이 수락 가능한 상태가 아닙니다.", error_code="PROPOSER_POST_NOT_OPEN"), status=409)
 
-        # 5. 제안 상태 업데이트
-        proposal.status = "accepted"
-        proposal.save()
+            # (선택) 한 가게당 1개의 active 제휴 정책 가드
+            if Partnership.objects.filter(
+                status="active", deleted_at__isnull=True
+            ).filter(
+                Q(merchant_a=my_merchant) | Q(merchant_b=my_merchant) |
+                Q(merchant_a=proposal.proposer_merchant) | Q(merchant_b=proposal.proposer_merchant)
+            ).exists():
+                return Response(failure(message="이미 활성 제휴가 존재합니다.", error_code="ACTIVE_PARTNERSHIP_EXISTS"), status=409)
 
-        return Response(success(message="제안을 수락하고 제휴를 생성했습니다."))
+            # 4) Partnership 생성
+            partnership = Partnership.objects.create(
+                merchant_a=my_merchant,
+                merchant_b=proposal.proposer_merchant,
+                post=author_post,        # 내 게시글 참조
+                proposal=proposal,
+                start_date=timezone.now().date(),
+                status="active",
+            )
+
+            # 5) 정책 양쪽 연결
+            policy_a.partnership = partnership
+            policy_b.partnership = partnership
+            policy_a.save()
+            policy_b.save()
+
+            # 6) 제안 상태 업데이트
+            proposal.status = "accepted"
+            proposal.save()
+
+            # 7) 게시글 상태를 양쪽 모두 'matched'로
+            author_post.status = "matched"
+            proposer_post.status = "matched"
+            author_post.save()
+            proposer_post.save()
+
+        return Response(success(message="제안을 수락하고 제휴를 생성했으며, 양측 게시글을 제휴 완료로 변경했습니다."))
 
 
 class OwnerPartnershipStatusCheckView(APIView):

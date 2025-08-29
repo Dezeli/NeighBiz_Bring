@@ -1,6 +1,361 @@
 import { useEffect, useState } from 'react';
+import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+
+const Container = styled.div`
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8fafc 0%, #e0f2fe 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+`;
+
+const ContentWrapper = styled.div`
+  width: 100vw;
+  max-width: 390px;
+  min-height: 100vh;
+  background: white;
+  padding: 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  
+  @media (min-width: 391px) {
+    border-radius: 16px;
+    min-height: 844px;
+    max-height: 90vh;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    overflow-y: auto;
+  }
+`;
+
+const LogoSection = styled.div`
+  text-align: center;
+  margin-bottom: 2rem;
+`;
+
+const Logo = styled.h1`
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.02em;
+  
+  .neigh {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .biz {
+    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+`;
+
+const PageTitle = styled.h2`
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 0.5rem;
+`;
+
+const PageDescription = styled.p`
+  color: #6b7280;
+  font-size: 0.875rem;
+  margin-bottom: 1.5rem;
+`;
+
+const NavigationTabs = styled.div`
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+`;
+
+const TabButton = styled.button`
+  flex: 1;
+  height: 48px;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  
+  ${props => props.$active ? `
+    background: linear-gradient(135deg, #10b981 0%, #0ea5e9 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    cursor: default;
+  ` : `
+    background: rgba(255, 255, 255, 0.9);
+    color: #374151;
+    border: 1px solid #e5e7eb;
+    
+    &:hover {
+      background: white;
+      border-color: #d1d5db;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+  `}
+`;
+
+const PostsList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  flex: 1;
+`;
+
+const PostCard = styled.div`
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(226, 232, 240, 0.6);
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  cursor: ${props => (props.$disabled ? 'default' : 'pointer')};
+  opacity: ${props => (props.$disabled ? 0.7 : 1)};
+  pointer-events: ${props => (props.$disabled ? 'none' : 'auto')};
+
+  &:hover {
+    ${props => !props.$disabled && `
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+      transform: translateY(-2px);
+      border-color: rgba(16, 185, 129, 0.3);
+    `}
+  }
+
+  &:active {
+    ${props => !props.$disabled && `transform: translateY(-1px);`}
+  }
+`;
+
+const PostHeader = styled.div`
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+`;
+
+const AuthorInfo = styled.div`
+  display: flex;
+  align-items: center;
+  flex: 1;
+`;
+
+const AuthorAvatar = styled.div`
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 0.75rem;
+  font-size: 1.125rem;
+`;
+
+const AuthorDetails = styled.div`
+  flex: 1;
+`;
+
+const PostTitle = styled.h3`
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 0.25rem;
+`;
+
+const PostMeta = styled.p`
+  font-size: 0.75rem;
+  color: #6b7280;
+`;
+
+const StatusBadge = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.75rem;
+  background: ${p => p.$bg || 'rgba(16,185,129,0.10)'};
+  color: ${p => p.$color || '#065f46'};
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+`;
+
+const StatusDot = styled.div`
+  width: 6px;
+  height: 6px;
+  background: ${p => p.$dot || '#10b981'};
+  border-radius: 50%;
+`;
+
+const CouponDescription = styled.div`
+  background: rgba(248, 250, 252, 0.8);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+`;
+
+const CouponLabel = styled.p`
+  color: #374151;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+`;
+
+const CouponText = styled.p`
+  color: #6b7280;
+  font-size: 0.875rem;
+  line-height: 1.4;
+`;
+
+const CouponInfo = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+`;
+
+const InfoBox = styled.div`
+  background: ${props => props.$variant === 'value' ? 
+    'rgba(59, 130, 246, 0.1)' : 'rgba(147, 51, 234, 0.1)'
+  };
+  border-radius: 12px;
+  padding: 0.75rem;
+`;
+
+const InfoLabel = styled.p`
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  color: ${props => props.$variant === 'value' ? '#1e40af' : '#7c2d12'};
+`;
+
+const InfoValue = styled.p`
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: ${props => props.$variant === 'value' ? '#1e3a8a' : '#581c87'};
+`;
+
+const EmptyState = styled.div`
+  text-align: center;
+  padding: 3rem 1rem;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(226, 232, 240, 0.6);
+  border-radius: 16px;
+`;
+
+const EmptyIcon = styled.div`
+  font-size: 3rem;
+  margin-bottom: 1rem;
+`;
+
+const EmptyTitle = styled.h3`
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+`;
+
+const EmptyDescription = styled.p`
+  color: #6b7280;
+  font-size: 0.875rem;
+  line-height: 1.5;
+`;
+
+const LoadingContainer = styled.div`
+  text-align: center;
+  padding: 3rem 1rem;
+`;
+
+const LoadingSpinner = styled.div`
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(16, 185, 129, 0.2);
+  border-top: 3px solid #10b981;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`;
+
+const LoadingText = styled.p`
+  color: #6b7280;
+  font-size: 0.875rem;
+`;
+
+const ErrorContainer = styled.div`
+  text-align: center;
+  padding: 3rem 1rem;
+`;
+
+const ErrorIcon = styled.div`
+  font-size: 3rem;
+  margin-bottom: 1rem;
+`;
+
+const ErrorText = styled.p`
+  color: #6b7280;
+  font-size: 0.875rem;
+  margin-bottom: 1.5rem;
+`;
+
+const RetryButton = styled.button`
+  background: linear-gradient(135deg, #10b981 0%, #0ea5e9 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+  }
+`;
+
+const Footer = styled.div`
+  text-align: center;
+  margin-top: 2rem;
+  color: #9ca3af;
+  font-size: 0.75rem;
+`;
+
+/** ---------- 상태/표시 유틸 ---------- */
+const getStatusMeta = (status) => {
+  switch (status) {
+    case 'open':
+      return { label: '모집중', bg: 'rgba(16,185,129,0.10)', color: '#065f46', dot: '#10b981' };
+    case 'matched':
+      return { label: '제휴완료', bg: 'rgba(59,130,246,0.10)', color: '#1e3a8a', dot: '#3b82f6' };
+    case 'closed':
+      return { label: '마감', bg: 'rgba(107,114,128,0.12)', color: '#374151', dot: '#6b7280' };
+    default:
+      return { label: '모집중', bg: 'rgba(16,185,129,0.10)', color: '#065f46', dot: '#10b981' };
+  }
+};
+
+const isPostClickable = (status) => status === 'open';
 
 const PostsListPage = () => {
   const navigate = useNavigate();
@@ -17,7 +372,12 @@ const PostsListPage = () => {
           method: 'GET',
           url: '/posts/',
         });
-        setPosts(response);
+
+        // 공통 응답 포맷 대응: { success, data, ... } 또는 배열 직접
+        const data = Array.isArray(response)
+          ? response
+          : (response?.data ?? []);
+        setPosts(data);
       } catch (err) {
         setError('게시글을 불러오는데 실패했습니다.');
       } finally {
@@ -39,11 +399,17 @@ const PostsListPage = () => {
   };
 
   const formatPrice = (price) => {
-    return price.toLocaleString('ko-KR');
+    if (price == null) return '-';
+    try {
+      return Number(price).toLocaleString('ko-KR');
+    } catch {
+      return String(price);
+    }
   };
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
     return date.toLocaleDateString('ko-KR', {
       year: 'numeric',
       month: 'short',
@@ -73,144 +439,126 @@ const PostsListPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-teal-100 flex items-center justify-center p-4">
-        <div className="bg-white p-8 rounded-2xl shadow-lg text-center">
-          <div className="w-8 h-8 border-4 border-green-200 border-t-green-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">게시글을 불러오는 중...</p>
-        </div>
-      </div>
+      <Container>
+        <ContentWrapper>
+          <LoadingContainer>
+            <LoadingSpinner />
+            <LoadingText>게시글을 불러오는 중...</LoadingText>
+          </LoadingContainer>
+        </ContentWrapper>
+      </Container>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-teal-100 flex items-center justify-center p-4">
-        <div className="bg-white p-8 rounded-2xl shadow-lg text-center">
-          <div className="text-4xl mb-4">❌</div>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors"
-          >
-            다시 시도
-          </button>
-        </div>
-      </div>
+      <Container>
+        <ContentWrapper>
+          <ErrorContainer>
+            <ErrorIcon>❌</ErrorIcon>
+            <ErrorText>{error}</ErrorText>
+            <RetryButton onClick={() => window.location.reload()}>
+              다시 시도
+            </RetryButton>
+          </ErrorContainer>
+        </ContentWrapper>
+      </Container>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-teal-100">
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-2xl mx-auto">
-          {/* 헤더 */}
-          <div className="text-center mb-8">
-            <div className="w-20 h-20 bg-gradient-to-r from-green-500 to-teal-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-              <span className="text-3xl text-white">📋</span>
-            </div>
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">제휴 게시글</h1>
-            <p className="text-gray-500">다른 사장님들의 제휴 제안을 확인해보세요</p>
-          </div>
+    <Container>
+      <ContentWrapper>
+        <LogoSection>
+          <Logo>
+            <span className="neigh">Neigh</span>
+            <span className="biz">Biz</span>
+          </Logo>
+          <PageTitle>제휴 게시글</PageTitle>
+          <PageDescription>다른 사장님들의 제휴 제안을 확인해보세요</PageDescription>
+        </LogoSection>
 
-          {/* 네비게이션 버튼 */}
-          <div className="flex gap-3 mb-6">
-            <button
-              onClick={() => navigate('/owner/mypage')}
-              className="flex-1 bg-white hover:bg-gray-50 text-gray-700 font-semibold py-3 px-4 rounded-xl shadow-md border transition-colors flex items-center justify-center"
-            >
-              <span className="mr-2">👤</span>
-              마이페이지
-            </button>
-            <button
-              disabled
-              className="flex-1 bg-green-500 text-white font-semibold py-3 px-4 rounded-xl shadow-md cursor-default flex items-center justify-center"
-            >
-              <span className="mr-2">📋</span>
-              제휴 게시글
-            </button>
-          </div>
+        <NavigationTabs>
+          <TabButton onClick={() => navigate('/owner/mypage')}>
+            <span>👤</span>
+            마이페이지
+          </TabButton>
+          <TabButton $active>
+            <span>📋</span>
+            제휴 게시글
+          </TabButton>
+        </NavigationTabs>
 
-          {/* 게시글 목록 */}
-          <div className="space-y-4">
-            {posts.length === 0 ? (
-              <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
-                <div className="text-4xl mb-4">📝</div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">등록된 게시글이 없습니다</h3>
-                <p className="text-gray-500 text-sm">
-                  아직 제휴 제안이 없어요.<br />
-                  조금 더 기다려보세요!
-                </p>
-              </div>
-            ) : (
-              posts.map((post) => (
-                <div key={post.id} className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow">
-                  {/* 게시글 헤더 */}
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center">
-                      <div className="w-12 h-12 bg-gradient-to-r from-gray-100 to-gray-200 rounded-full flex items-center justify-center mr-3">
-                        <span className="text-lg">{getCategoryIcon(post.author.category)}</span>
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-lg text-gray-800">{post.title}</h3>
-                        <p className="text-sm text-gray-500">
-                          {getCategoryName(post.author.category)} • {formatDate(post.created_at)}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="inline-flex items-center bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-medium">
-                        <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
-                        모집중
-                      </div>
-                    </div>
-                  </div>
+        <PostsList>
+          {posts.length === 0 ? (
+            <EmptyState>
+              <EmptyIcon>📝</EmptyIcon>
+              <EmptyTitle>등록된 게시글이 없습니다</EmptyTitle>
+              <EmptyDescription>
+                아직 제휴 제안이 없어요.<br />
+                조금 더 기다려보세요!
+              </EmptyDescription>
+            </EmptyState>
+          ) : (
+            posts.map((post) => {
+              const meta = getStatusMeta(post.status);
+              const disabled = !isPostClickable(post.status);
+              const category = post?.author?.category; // 백엔드 스펙에 맞춰 필요시 수정
 
-                  {/* 쿠폰 설명 */}
-                  <div className="bg-gray-50 rounded-xl p-4 mb-4">
-                    <p className="text-gray-800 font-medium mb-2">🎫 제공 쿠폰</p>
-                    <p className="text-gray-600">{post.description}</p>
-                  </div>
+              return (
+                <PostCard
+                  key={post.id}
+                  $disabled={disabled}
+                  onClick={() => !disabled && navigate(`/owner/post/${post.id}`)}
+                >
+                  <PostHeader>
+                    <AuthorInfo>
+                      <AuthorAvatar>
+                        {getCategoryIcon(category)}
+                      </AuthorAvatar>
+                      <AuthorDetails>
+                        <PostTitle>{post.title}</PostTitle>
+                        <PostMeta>
+                          {getCategoryName(category)} • {formatDate(post.created_at)}
+                        </PostMeta>
+                      </AuthorDetails>
+                    </AuthorInfo>
+                    <StatusBadge $bg={meta.bg} $color={meta.color}>
+                      <StatusDot $dot={meta.dot} />
+                      {meta.label}
+                    </StatusBadge>
+                  </PostHeader>
 
-                  {/* 쿠폰 정보 */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-blue-50 rounded-xl p-3">
-                      <p className="text-xs text-blue-600 font-medium mb-1">예상 가치</p>
-                      <p className="text-lg font-bold text-blue-800">
+                  <CouponDescription>
+                    <CouponLabel>🎫 제공 쿠폰</CouponLabel>
+                    <CouponText>{post.description}</CouponText>
+                  </CouponDescription>
+
+                  <CouponInfo>
+                    <InfoBox $variant="value">
+                      <InfoLabel $variant="value">예상 가치</InfoLabel>
+                      <InfoValue $variant="value">
                         {formatPrice(post.expected_value)}원
-                      </p>
-                    </div>
-                    <div className="bg-purple-50 rounded-xl p-3">
-                      <p className="text-xs text-purple-600 font-medium mb-1">유효 기간</p>
-                      <p className="text-lg font-bold text-purple-800">
+                      </InfoValue>
+                    </InfoBox>
+                    <InfoBox $variant="duration">
+                      <InfoLabel $variant="duration">유효 기간</InfoLabel>
+                      <InfoValue $variant="duration">
                         {formatDuration(post.expected_duration)}
-                      </p>
-                    </div>
-                  </div>
+                      </InfoValue>
+                    </InfoBox>
+                  </CouponInfo>
+                </PostCard>
+              );
+            })
+          )}
+        </PostsList>
 
-                  {/* 액션 버튼 */}
-                  <div className="mt-4 pt-4 border-t border-gray-100">
-                    <button
-                      className="w-full bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 text-white font-semibold py-3 rounded-xl transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-md"
-                      onClick={() => alert('제휴 신청 기능은 곧 출시됩니다!')}
-                    >
-                      <span className="mr-2">🤝</span>
-                      제휴 신청하기
-                    </button>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-
-          {/* 푸터 */}
-          <div className="text-center mt-8">
-            <p className="text-xs text-gray-400">
-              네이비즈 소상공인 제휴 플랫폼
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
+        <Footer>
+          네이비즈 소상공인 제휴 플랫폼
+        </Footer>
+      </ContentWrapper>
+    </Container>
   );
 };
 
