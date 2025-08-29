@@ -1,8 +1,209 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import styled from 'styled-components';
 import api from '../utils/api';
 import { extractErrorMessage } from '../utils/response';
 import { useAuth } from '../context/AuthContext';
+
+const Container = styled.div`
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8fafc 0%, #e0f2fe 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+`;
+
+const ContentWrapper = styled.div`
+  width: 100vw;
+  max-width: 390px;
+  min-height: 100vh;
+  background: white;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  
+  @media (min-width: 391px) {
+    border-radius: 16px;
+    min-height: 844px;
+    max-height: 90vh;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+  }
+`;
+
+const LogoSection = styled.div`
+  margin-bottom: 3rem;
+`;
+
+const Logo = styled.h1`
+  font-size: 2.25rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.02em;
+  
+  .neigh {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .biz {
+    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+`;
+
+const Subtitle = styled.p`
+  color: #64748b;
+  font-size: 0.9rem;
+  font-weight: 500;
+`;
+
+const FormContainer = styled.div`
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(226, 232, 240, 0.6);
+  border-radius: 16px;
+  padding: 2rem 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+`;
+
+const Form = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+`;
+
+const InputGroup = styled.div`
+  text-align: left;
+`;
+
+const Label = styled.label`
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+`;
+
+const Input = styled.input`
+  width: 100%;
+  max-width: 100%;
+  height: 52px;
+  padding: 0 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 1rem;
+  background: rgba(255, 255, 255, 0.9);
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+
+  &:focus {
+    outline: none;
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    background: white;
+  }
+
+  &:disabled {
+    background: #f9fafb;
+    color: #9ca3af;
+    cursor: not-allowed;
+  }
+
+  &::placeholder {
+    color: #9ca3af;
+  }
+`;
+
+const ErrorContainer = styled.div`
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
+const ErrorText = styled.p`
+  color: #dc2626;
+  font-size: 0.875rem;
+  margin: 0;
+`;
+
+const LoginButton = styled.button`
+  width: 100%;
+  height: 52px;
+  background: linear-gradient(135deg, #10b981 0%, #0ea5e9 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+`;
+
+const LoadingSpinner = styled.div`
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`;
+
+const SignupLink = styled.a`
+  color: #0ea5e9;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.3s ease;
+
+  &:hover {
+    color: #0284c7;
+    text-decoration: underline;
+  }
+`;
+
+const Footer = styled.div`
+  margin-top: 2rem;
+  color: #9ca3af;
+  font-size: 0.875rem;
+`;
 
 const OwnerLoginPage = () => {
   const [username, setUsername] = useState('');
@@ -13,7 +214,7 @@ const OwnerLoginPage = () => {
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     setError('');
     setIsLoading(true);
 
@@ -36,96 +237,80 @@ const OwnerLoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
-        {/* 로고/헤더 */}
-        <div className="text-center mb-8">
-          <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-            <span className="text-3xl text-white">🏪</span>
-          </div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">네이비즈</h1>
-          <p className="text-gray-500">사장님 로그인</p>
-        </div>
+    <Container>
+      <ContentWrapper>
+        <LogoSection>
+          <Logo>
+            <span className="neigh">Neigh</span>
+            <span className="biz">Biz</span>
+          </Logo>
+          <Subtitle>사장님 로그인</Subtitle>
+        </LogoSection>
 
-        {/* 로그인 폼 */}
-        <div className="bg-white p-8 rounded-3xl shadow-xl">
-          <form onSubmit={handleLogin} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                아이디
-              </label>
-              <input
+        <FormContainer>
+          <Form>
+            <InputGroup>
+              <Label>아이디</Label>
+              <Input
                 type="text"
                 placeholder="아이디를 입력하세요"
                 value={username}
                 onChange={e => setUsername(e.target.value)}
                 disabled={isLoading}
-                className="w-full h-14 px-4 border border-gray-200 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 transition-colors"
                 required
               />
-            </div>
+            </InputGroup>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                비밀번호
-              </label>
-              <input
+            <InputGroup>
+              <Label>비밀번호</Label>
+              <Input
                 type="password"
                 placeholder="비밀번호를 입력하세요"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 disabled={isLoading}
-                className="w-full h-14 px-4 border border-gray-200 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 transition-colors"
                 required
               />
-            </div>
+            </InputGroup>
 
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-                <div className="flex items-center">
-                  <span className="text-red-500 mr-2">⚠️</span>
-                  <p className="text-sm text-red-600">{error}</p>
-                </div>
-              </div>
+              <ErrorContainer>
+                <span>⚠️</span>
+                <ErrorText>{error}</ErrorText>
+              </ErrorContainer>
             )}
 
-            <button
-              type="submit"
+            <LoginButton
+              type="button"
+              onClick={handleLogin}
               disabled={isLoading || !username.trim() || !password.trim()}
-              className="w-full h-14 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-xl text-lg font-semibold transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center shadow-lg"
             >
               {isLoading ? (
                 <>
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-3"></div>
+                  <LoadingSpinner />
                   로그인 중...
                 </>
               ) : (
                 <>
-                  <span className="mr-2">🚀</span>
+                  <span>🚀</span>
                   로그인
                 </>
               )}
-            </button>
-          </form>
+            </LoginButton>
+          </Form>
 
-          <div className="mt-6 text-center">
-            <a 
-              href="/signup" 
-              className="text-blue-600 hover:text-blue-700 text-sm font-medium hover:underline transition-colors"
-            >
+          <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
+            <SignupLink href="/signup">
               계정이 없으신가요? 회원가입하기
-            </a>
+            </SignupLink>
           </div>
-        </div>
+        </FormContainer>
 
-        {/* 푸터 */}
-        <div className="text-center mt-8">
-          <p className="text-sm text-gray-400">
-            소상공인 간 제휴를 통한 상생 플랫폼
-          </p>
-        </div>
-      </div>
-    </div>
+        <Footer>
+          소상공인 간 제휴를 통한 상생 플랫폼
+        </Footer>
+      </ContentWrapper>
+    </Container>
   );
 };
 

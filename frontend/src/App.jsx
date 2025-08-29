@@ -7,6 +7,9 @@ import OwnerMyPage from './pages/OwnerMyPage';
 import CouponSetupPage from './pages/CouponSetupPage';
 import PostsListPage from './pages/PostsListPage';
 import IssuePage from './pages/IssuePage';
+import PostDetailPage from './pages/PostDetailPage';
+import OwnerStatsPage from './pages/OwnerStatsPage';
+import ProposalDetailPage from './pages/ProposalDetailPage';
 import PrivateRoute from './components/PrivateRoute';
 import { useAuth } from './context/AuthContext';
 
@@ -47,6 +50,30 @@ function App() {
         element={
           <PrivateRoute isAuthenticated={isAuthenticated} loading={loading}>
             <PostsListPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/owner/post/:id"
+        element={
+          <PrivateRoute isAuthenticated={isAuthenticated} loading={loading}>
+            <PostDetailPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/owner/stats"
+        element={
+          <PrivateRoute isAuthenticated={isAuthenticated} loading={loading}>
+            <OwnerStatsPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/owner/proposal/received/:proposalId"
+        element={
+          <PrivateRoute isAuthenticated={isAuthenticated} loading={loading}>
+            <ProposalDetailPage />
           </PrivateRoute>
         }
       />
