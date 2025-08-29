@@ -5,3 +5,9 @@ dist
 *.log
 Dockerfile*
 docker-compose*
+frontend/node_modules
+frontend/.cache
+frontend/build
+frontend/dist
+frontend/.next
+frontend/.turbo
