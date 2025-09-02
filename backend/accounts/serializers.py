@@ -24,7 +24,9 @@ class OwnerSignupSerializer(serializers.Serializer):
     phone_number = serializers.CharField()
     username = serializers.CharField()
     password = serializers.CharField()
+
     name = serializers.CharField()
+    owner_name = serializers.CharField()
     phone = serializers.CharField()
     address = serializers.CharField()
     category = serializers.ChoiceField(choices=Merchant.CATEGORY_CHOICES)
@@ -43,15 +45,16 @@ class OwnerSignupSerializer(serializers.Serializer):
         user, _ = User.objects.get_or_create(phone_number=phone)
         user.role = "owner"
         user.save()
-        
+
         if Merchant.objects.filter(user=user).exists():
             raise serializers.ValidationError("이미 등록된 사장님 계정입니다.")
-        
+
         merchant = Merchant.objects.create(
             user=user,
             username=validated_data["username"],
             password=make_password(validated_data["password"]),
             name=validated_data["name"],
+            owner_name=validated_data["owner_name"],
             phone=validated_data["phone"],
             address=validated_data["address"],
             category=validated_data["category"],
@@ -64,6 +67,7 @@ class OwnerSignupSerializer(serializers.Serializer):
             "merchant_id": merchant.id,
             "username": merchant.username,
         }
+
     
 
 class OwnerLoginSerializer(serializers.Serializer):
