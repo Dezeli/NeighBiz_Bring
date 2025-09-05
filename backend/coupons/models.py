@@ -1,37 +1,55 @@
 from django.db import models
-from merchants.models import Merchant
-from partnerships.models import Partnership, Post
-from accounts.models import User
+from stores.models import Store
+from accounts.models import ConsumerUser
+from common.enums import PartnershipDuration, CouponStatus
 
 
 class CouponPolicy(models.Model):
-    merchant = models.ForeignKey(Merchant, on_delete=models.CASCADE)
-    partnership = models.ForeignKey(Partnership, on_delete=models.CASCADE, null=True, blank=True)
+    store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name="coupon_policies")
+
     description = models.TextField()
-    expected_value = models.PositiveIntegerField(default=0)
+    expected_value = models.PositiveIntegerField()
+
     expected_duration = models.CharField(
         max_length=20,
-        choices=Post.DURATION_CHOICES,
-        default="unlimited"
+        choices=PartnershipDuration.choices(),
+        default=PartnershipDuration.ONE_MONTH.value,
     )
-    daily_limit = models.PositiveIntegerField(null=True, blank=True)
-    total_limit = models.PositiveIntegerField(null=True, blank=True)
 
+    monthly_limit = models.PositiveIntegerField(null=True)
+
+    is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    deleted_at = models.DateTimeField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.store.name} - {self.expected_value}원 혜택"
+
+
 
 
 class Coupon(models.Model):
-    STATUS_CHOICES = (
-        ("active", "사용가능"),
-        ("used", "사용됨"),
-        ("expired", "만료됨"),
+    user = models.ForeignKey(ConsumerUser, on_delete=models.CASCADE, related_name="coupons")
+    policy = models.ForeignKey(CouponPolicy, on_delete=models.CASCADE, related_name="coupons")
+
+    slug = models.SlugField(unique=True, max_length=32)
+    short_code = models.CharField(max_length=12, unique=True)
+
+    status = models.CharField(
+        max_length=10,
+        choices=CouponStatus.choices(),
+        default=CouponStatus.ACTIVE.value
     )
 
-    short_code = models.CharField(max_length=10, unique=True)
-    slug = models.SlugField(unique=True)
-    policy = models.ForeignKey(CouponPolicy, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="active")
     issued_at = models.DateTimeField(auto_now_add=True)
     used_at = models.DateTimeField(null=True, blank=True)
+    expired_at = models.DateTimeField(null=True)
+
+    def __str__(self):
+        return f"{self.short_code} - {self.get_status_display()}"
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["short_code"]),
+            models.Index(fields=["slug"]),
+        ]

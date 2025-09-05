@@ -29,15 +29,14 @@ THIRD_PARTY_APPS = [
 
 LOCAL_APPS = [
     "accounts",
-    "merchants",
+    "stores",
     "partnerships",
     "coupons",
-    "events",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
-AUTH_USER_MODEL = "accounts.User"
+AUTH_USER_MODEL = "accounts.OwnerUser"
 
 # MIDDLEWARE
 MIDDLEWARE = [

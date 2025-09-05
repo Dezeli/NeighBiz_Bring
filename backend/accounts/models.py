@@ -1,88 +1,103 @@
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
-from django.utils import timezone
-from django.conf import settings
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 
 
-class UserManager(BaseUserManager):
-    def create_user(self, phone_number, password=None, **extra_fields):
-        if not phone_number:
-            raise ValueError("전화번호는 필수입니다.")
-        user = self.model(phone_number=phone_number, **extra_fields)
+class OwnerUserManager(BaseUserManager):
+    def create_user(self, username, password=None, **extra_fields):
+        if not username:
+            raise ValueError("아이디는 필수입니다.")
+        user = self.model(username=username, **extra_fields)
         user.set_password(password)
-        user.save(using=self._db)
+        user.save()
         return user
 
-    def create_superuser(self, phone_number, password=None, **extra_fields):
-        extra_fields.setdefault("is_staff", True)
-        extra_fields.setdefault("is_superuser", True)
-        return self.create_user(phone_number, password, **extra_fields)
+    def create_superuser(self, username, password, **extra_fields):
+        extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_active', True)
+
+        if not extra_fields.get('is_superuser'):
+            raise ValueError('Superuser must have is_superuser=True.')
+        if not extra_fields.get('is_staff'):
+            raise ValueError('Superuser must have is_staff=True.')
+
+        return self.create_user(username, password, **extra_fields)
 
 
-class User(AbstractBaseUser, PermissionsMixin):
-    ROLE_CHOICES = (
-        ("owner", "사장님"),
-        ("guest", "게스트"),
-    )
-
-    phone_number = models.CharField(max_length=20, unique=True)
-    role = models.CharField(max_length=10, choices=ROLE_CHOICES)
-    created_at = models.DateTimeField(auto_now_add=True)
-    deleted_at = models.DateTimeField(null=True, blank=True)
-
-    is_active = models.BooleanField(default=True)
-    is_staff = models.BooleanField(default=False)
-
-    USERNAME_FIELD = "phone_number"
-    REQUIRED_FIELDS = []
-
-    objects = UserManager()
-
-    def __str__(self):
-        return self.phone_number
-
-
-
-class VerificationCode(models.Model):
-    phone_number = models.CharField(max_length=20, db_index=True)
-    code = models.CharField(max_length=6)
-    created_at = models.DateTimeField(auto_now_add=True)
-    expires_at = models.DateTimeField()
+class OwnerUser(AbstractBaseUser, PermissionsMixin):
+    username = models.CharField(max_length=30, unique=True)
+    password = models.CharField(max_length=128)
+    name = models.CharField(max_length=30)
+    phone_number = models.CharField(max_length=20)
+    business_license_image = models.URLField(max_length=512, blank=True, null=True)
 
     is_verified = models.BooleanField(default=False)
+    is_superuser = models.BooleanField(default=False)
+    is_staff = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
 
-    class Meta:
-        indexes = [
-            models.Index(fields=["phone_number", "-created_at"]),
-        ]
-
-    def is_expired(self):
-        return timezone.now() > self.expires_at
-    
-
-class RefreshToken(models.Model):
-    SESSION_SCOPE_CHOICES = (
-        ("guest", "게스트"),
-        ("owner", "사장님"),
-    )
-
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    token = models.CharField(max_length=255, unique=True)
-
-    session_scope = models.CharField(
-        max_length=10,
-        choices=SESSION_SCOPE_CHOICES,
-        default="guest",
-        db_index=True
-    )
-
-    device_info = models.TextField(blank=True, null=True)
+    last_login = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    expires_at = models.DateTimeField()
-    revoked = models.BooleanField(default=False)
 
-    def is_expired(self):
-        return self.revoked or timezone.now() > self.expires_at
+    objects = OwnerUserManager()
+
+    USERNAME_FIELD = 'username'
+    REQUIRED_FIELDS = ['phone_number', 'name']
 
     def __str__(self):
-        return f"{self.user.phone_number} - {self.session_scope} - {self.device_info or 'Unknown Device'}"
+        return f"[{self.username}] {self.name}"
+
+
+class ConsumerUser(models.Model):
+    kakao_id = models.CharField(max_length=100, unique=True)
+    phone_number = models.CharField(max_length=20)
+
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_login = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"Consumer {self.phone_number or self.kakao_id}"
+    
+
+
+
+
+class OwnerRefreshToken(models.Model):
+    user = models.ForeignKey("accounts.OwnerUser", on_delete=models.CASCADE)
+    token = models.TextField()
+    device_info = models.CharField(max_length=255)
+    
+    revoked = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+
+    def __str__(self):
+        return f"[OWNER] Token for {self.user.username} ({'revoked' if self.revoked else 'active'})"
+
+
+class ConsumerRefreshToken(models.Model):
+    user = models.ForeignKey("accounts.ConsumerUser", on_delete=models.CASCADE)
+    token = models.TextField()
+    device_info = models.CharField(max_length=255)
+
+    revoked = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+
+    def __str__(self):
+        return f"[CONSUMER] Token for {self.user.phone_number} ({'revoked' if self.revoked else 'active'})"
+
+
+
+class PhoneVerification(models.Model):
+    phone_number = models.CharField(max_length=20)
+    code = models.CharField(max_length=6)
+
+    is_verified = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    verified_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.phone_number} ({'verified' if self.is_verified else 'pending'})"
