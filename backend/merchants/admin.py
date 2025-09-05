@@ -3,8 +3,10 @@ from .models import Merchant
 
 @admin.register(Merchant)
 class MerchantAdmin(admin.ModelAdmin):
-    list_display = ("id", "name", "username", "phone", "category", "approved", "created_at")
-    search_fields = ("name", "username", "phone", "address")
+    list_display = (
+        "id", "name", "owner_name", "username", "phone", "category", "approved", "created_at"
+    )
+    search_fields = ("name", "owner_name", "username", "phone", "address")
     list_filter = ("category", "approved", "created_at")
     ordering = ("-created_at",)
     readonly_fields = ["created_at", "deleted_at"]
@@ -13,7 +15,8 @@ class MerchantAdmin(admin.ModelAdmin):
         (None, {
             "fields": (
                 "user",
-                "name", "phone", "address", "category",
+                "name", "owner_name",
+                "phone", "address", "category",
                 "description", "image_url", "business_hours",
                 "approved", "created_at", "deleted_at"
             )

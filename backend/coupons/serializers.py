@@ -12,8 +12,6 @@ class CouponPolicySerializer(serializers.ModelSerializer):
             "description",
             "expected_value",
             "expected_duration",
-            "valid_from",
-            "valid_until",
             "daily_limit",
             "total_limit",
         ]

@@ -3,7 +3,7 @@ from .models import CouponPolicy, Coupon
 
 @admin.register(CouponPolicy)
 class CouponPolicyAdmin(admin.ModelAdmin):
-    list_display = ("id", "merchant", "partnership", "valid_from", "valid_until", "daily_limit", "total_limit")
+    list_display = ("id", "merchant", "partnership", "daily_limit", "total_limit")
     search_fields = ("description",)
 
 @admin.register(Coupon)

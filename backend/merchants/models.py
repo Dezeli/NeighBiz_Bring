@@ -13,6 +13,7 @@ class Merchant(models.Model):
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
+    owner_name = models.CharField(max_length=50, blank=True, null=True)
     phone = models.CharField(max_length=20)
     address = models.TextField()
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)

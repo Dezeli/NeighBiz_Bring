@@ -14,8 +14,6 @@ class CouponPolicy(models.Model):
         choices=Post.DURATION_CHOICES,
         default="unlimited"
     )
-    valid_from = models.DateField(null=True, blank=True)
-    valid_until = models.DateField(null=True, blank=True)
     daily_limit = models.PositiveIntegerField(null=True, blank=True)
     total_limit = models.PositiveIntegerField(null=True, blank=True)
 
