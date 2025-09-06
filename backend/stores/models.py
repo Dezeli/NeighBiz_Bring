@@ -3,7 +3,11 @@ from accounts.models import OwnerUser
 from common.enums import StoreCategory
 
 class Store(models.Model):
-    owner = models.ForeignKey(OwnerUser, on_delete=models.CASCADE, related_name="stores")
+    owner = models.OneToOneField(
+        OwnerUser,
+        on_delete=models.CASCADE,
+        related_name='store'
+    )
 
     name = models.CharField(max_length=50)
     phone = models.CharField(max_length=20)

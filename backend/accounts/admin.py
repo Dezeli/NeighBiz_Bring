@@ -5,6 +5,7 @@ from .models import (
     OwnerRefreshToken, ConsumerRefreshToken,
     PhoneVerification
 )
+from common.s3 import generate_presigned_url
 
 @admin.register(OwnerUser)
 class OwnerUserAdmin(admin.ModelAdmin):
@@ -19,16 +20,18 @@ class OwnerUserAdmin(admin.ModelAdmin):
     ordering = ("-created_at",)
 
     def license_preview(self, obj):
-        if obj.business_license_image:
-            return format_html(
-                '<a href="{url}" target="_blank">'
-                '<img src="{url}" style="height:40px; border:1px solid #ccc;" />'
-                '</a>',
-                url=obj.business_license_image
-            )
-        return "-"
-    license_preview.short_description = "사업자등록증"
+        if not obj.business_license_image:
+            return "없음"
 
+        presigned_url = generate_presigned_url(obj.business_license_image)
+        if not presigned_url:
+            return "URL 생성 실패"
+
+        return format_html(
+            f'<a href="{presigned_url}" target="_blank" style="font-weight: bold;">🖼 보기</a>'
+        )
+
+    license_preview.short_description = "사업자등록증"
 
 
 @admin.register(ConsumerUser)
