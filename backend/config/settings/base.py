@@ -4,6 +4,7 @@ from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 APP_BASE_URL = config("APP_BASE_URL", "http://127.0.0.1:8000")
+ADMIN_APPROVE_PASSWORD = config("ADMIN_APPROVE_PASSWORD", "1234567")
 
 # SECURITY
 SECRET_KEY = config("DJANGO_SECRET_KEY")
@@ -18,6 +19,7 @@ DJANGO_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    'django_filters',
 ]
 
 THIRD_PARTY_APPS = [
@@ -103,6 +105,10 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "daily_phone": "10/day",
     },
+    
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 10,
+    "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
 }
 
 # STATIC/MEDIA

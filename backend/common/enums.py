@@ -64,6 +64,7 @@ class ProposalStatus(str, Enum):
     PENDING = "pending"
     ACCEPTED = "accepted"
     REJECTED = "rejected"
+    CANCELLED = "cancelled"
 
     @classmethod
     def choices(cls):
@@ -71,7 +72,9 @@ class ProposalStatus(str, Enum):
             (cls.PENDING.value, "검토 중"),
             (cls.ACCEPTED.value, "승낙됨"),
             (cls.REJECTED.value, "거절됨"),
+            (cls.CANCELLED.value, "제안 취소됨"), 
         ]
+
 
 
 class PartnershipStatus(str, Enum):

@@ -4,7 +4,7 @@ from .models import Proposal, Partnership, PartnershipChangeRequest
 @admin.register(Proposal)
 class ProposalAdmin(admin.ModelAdmin):
     list_display = (
-        "id", "proposer_name", "recipient_name", "status", "created_at"
+        "id", "proposer_name", "recipient_name", "status", "created_at", "updated_at"
     )
     list_filter = ("status", "created_at")
     search_fields = ("proposer_store__name", "recipient_store__name")

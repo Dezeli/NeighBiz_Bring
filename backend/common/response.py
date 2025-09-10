@@ -9,10 +9,26 @@ def success(data=None, message=None):
         "error_code": None
     }
 
-def failure(message="서버와의 문제가 발생했습니다.", data=None, error_code="UNKNOWN_ERROR"):
+def failure(message=None, data=None, error_code="ERROR"):
+    data = data or {}
+
+    extracted_message = None
+    if isinstance(data, dict):
+        try:
+            first_key = next(iter(data))
+            first_error = data[first_key]
+            if isinstance(first_error, list):
+                extracted_message = str(first_error[0])
+            else:
+                extracted_message = str(first_error)
+        except Exception:
+            pass
+
+    final_message = extracted_message or message or "서버와의 문제가 발생했습니다."
+
     return {
         "success": False,
-        "message": message,
-        "data": data or {},  # ❌ 여기서 data가 dict가 아닐 경우 'global' 키로 래핑하지 마
+        "message": final_message,
+        "data": data,
         "error_code": error_code
     }
