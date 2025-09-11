@@ -1,6 +1,7 @@
 import random
 import string
 import uuid
+from partnerships.models import Partnership
 from datetime import timedelta
 from .enums import PartnershipDuration 
 from rest_framework import serializers
@@ -25,7 +26,14 @@ def generate_slug(length: int = 10) -> str:
     """
     10자리 랜덤 문자열, QR 링크로 활용
     """
-    return uuid.uuid4().hex[:length]
+    while True:
+        slug = uuid.uuid4().hex[:length]
+        if not Partnership.objects.filter(slug_for_a=slug).exists() and \
+           not Partnership.objects.filter(slug_for_b=slug).exists():
+            return slug
+
+
+
 
 def generate_temp_password(length=8):
     """

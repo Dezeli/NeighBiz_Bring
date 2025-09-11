@@ -1,9 +1,12 @@
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-
+from rest_framework.exceptions import ValidationError
+from rest_framework import status
+from common.enums import ProposalStatus
 from common.response import success, failure
-from partnerships.serializers import *
+from .models import Proposal
+from .serializers import *
 
 
 
@@ -60,3 +63,18 @@ class ProposalActionView(APIView):
             return Response(failure(message=error_message), status=400)
 
         return Response(success(message=message))
+
+
+class QRCodeImageView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        serializer = QRCodeSerializer(context={"user": request.user})
+
+        try:
+            data = serializer.data
+            return Response(success(data=data, message="QR 이미지 조회 성공"))
+        except ValidationError as e:
+            return Response(failure(message="QR 생성 실패", data=e.detail), status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response(failure(message="서버 오류 발생", data={"error": str(e)}), status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -117,10 +117,14 @@ class OwnerLoginSerializer(serializers.Serializer):
             expires_at=timezone.now() + timedelta(days=30)  # 30일 유효
         )
 
+        user.last_login = timezone.now()
+        user.save(update_fields=["last_login"])
+
         return {
             "access": str(access),
-            "refresh": str(refresh)
+            "refresh": str(refresh),
         }
+
     
 
 class RefreshTokenSerializer(serializers.Serializer):
