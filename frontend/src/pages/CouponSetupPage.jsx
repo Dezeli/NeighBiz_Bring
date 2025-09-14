@@ -53,8 +53,6 @@ const BackButton = styled.button`
   }
 `;
 
-
-
 const Logo = styled.h1`
   font-size: 1.75rem;
   font-weight: 800;
@@ -196,30 +194,14 @@ const Textarea = styled.textarea`
   }
 `;
 
-const DateGrid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
-  width: 100%;
-  
-  ${InputGroup} {
-    min-width: 0;
-    
-    ${Input} {
-      width: 100%;
-      min-width: 0;
-    }
-  }
-`;
-
-const LimitSection = styled.div`
+const ValueSection = styled.div`
   background: rgba(248, 250, 252, 0.8);
   border-radius: 16px;
   padding: 1.5rem;
   border: 1px solid rgba(226, 232, 240, 0.6);
 `;
 
-const LimitTitle = styled.h3`
+const ValueTitle = styled.h3`
   font-size: 1rem;
   font-weight: 600;
   color: #374151;
@@ -229,17 +211,10 @@ const LimitTitle = styled.h3`
   gap: 0.5rem;
 `;
 
-const LimitInputGroup = styled.div`
-  text-align: left;
-  margin-bottom: 1rem;
-  
-  &:last-child {
-    margin-bottom: 0;
-  }
-`;
-
-const SmallInput = styled(Input)`
-  height: 48px;
+const ValueGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
 `;
 
 const HelpText = styled.p`
@@ -261,6 +236,22 @@ const ErrorContainer = styled.div`
 
 const ErrorText = styled.p`
   color: #dc2626;
+  font-size: 0.875rem;
+  margin: 0;
+`;
+
+const SuccessContainer = styled.div`
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
+const SuccessText = styled.p`
+  color: #065f46;
   font-size: 0.875rem;
   margin: 0;
 `;
@@ -366,61 +357,84 @@ const CouponSetupPage = () => {
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   const [formData, setFormData] = useState({
     description: '',
     expected_value: '',
-    expected_duration: '1_month',
-    valid_from: '',
-    valid_until: '',
-    daily_limit: '',
-    total_limit: '',
+    expected_duration: '3_months',
+    monthly_limit: '',
   });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     setError('');
+    setSuccess('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
     setIsLoading(true);
 
     try {
       const submitData = {
-        ...formData,
+        description: formData.description.trim(),
         expected_value: parseInt(formData.expected_value),
-        daily_limit: parseInt(formData.daily_limit),
-        total_limit: parseInt(formData.total_limit),
+        expected_duration: formData.expected_duration,
+        monthly_limit: parseInt(formData.monthly_limit),
       };
 
       const response = await apiCall({
         method: 'POST',
-        url: '/coupon-policies/',
+        url: '/coupons/policy/',
         data: submitData,
       });
 
-      if (response.success) {
-        alert('쿠폰 정책이 성공적으로 등록되었습니다!\n마이페이지로 이동합니다.');
-        navigate('/owner/mypage');
+      if (response?.success) {
+        setSuccess('쿠폰 정책이 성공적으로 등록되었습니다!');
+        setTimeout(() => {
+          navigate('/owner/mypage');
+        }, 2000);
       } else {
-        setError('쿠폰 정책 등록에 실패했습니다.');
+        setError(response?.message || '쿠폰 정책 등록에 실패했습니다.');
       }
     } catch (err) {
-      setError(err.message || '쿠폰 정책 등록 중 오류가 발생했습니다.');
+      if (err.response && err.response.data) {
+        setError(err.response.data.message || '쿠폰 정책 등록에 실패했습니다.');
+      } else {
+        setError('쿠폰 정책 등록 중 오류가 발생했습니다. 네트워크를 확인해주세요.');
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
   const durationOptions = [
+    { value: 'day', label: '1일' },
+    { value: 'week', label: '1주일' },
     { value: '1_month', label: '1개월' },
     { value: '3_months', label: '3개월' },
     { value: '6_months', label: '6개월' },
     { value: 'unlimited', label: '무기한' },
   ];
+
+  const formatPrice = (value) => {
+    if (!value) return '';
+    return parseInt(value).toLocaleString('ko-KR');
+  };
+
+  const isFormValid = () => {
+    return (
+      formData.description.trim() &&
+      formData.expected_value &&
+      formData.monthly_limit &&
+      parseInt(formData.expected_value) > 0 &&
+      parseInt(formData.monthly_limit) > 0
+    );
+  };
 
   return (
     <Container>
@@ -444,97 +458,67 @@ const CouponSetupPage = () => {
               <Label>쿠폰 설명</Label>
               <Textarea
                 name="description"
-                placeholder="예: 아메리카노 무료 제공"
+                placeholder="예: 음료 1잔 무료 제공"
                 value={formData.description}
                 onChange={handleChange}
                 required
               />
+              <HelpText>고객에게 표시될 쿠폰의 내용을 구체적으로 작성해주세요</HelpText>
             </InputGroup>
 
-            <InputGroup>
-              <Label>예상 가치 (원)</Label>
-              <Input
-                type="number"
-                name="expected_value"
-                placeholder="4500"
-                value={formData.expected_value}
-                onChange={handleChange}
-                min="0"
-                required
-              />
-            </InputGroup>
+            <ValueSection>
+              <ValueTitle>🎯 쿠폰 조건 설정</ValueTitle>
+              
+              <ValueGrid>
+                <InputGroup>
+                  <Label>예상 가치 (원)</Label>
+                  <Input
+                    type="number"
+                    name="expected_value"
+                    placeholder="5000"
+                    value={formData.expected_value}
+                    onChange={handleChange}
+                    min="100"
+                    step="100"
+                    required
+                  />
+                  <HelpText>
+                    {formData.expected_value ? `${formatPrice(formData.expected_value)}원` : '쿠폰의 예상 가치'}
+                  </HelpText>
+                </InputGroup>
 
-            <InputGroup>
-              <Label>예상 지속 기간</Label>
-              <Select
-                name="expected_duration"
-                value={formData.expected_duration}
-                onChange={handleChange}
-                required
-              >
-                {durationOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </Select>
-            </InputGroup>
+                <InputGroup>
+                  <Label>월 한도 (매)</Label>
+                  <Input
+                    type="number"
+                    name="monthly_limit"
+                    placeholder="100"
+                    value={formData.monthly_limit}
+                    onChange={handleChange}
+                    min="1"
+                    required
+                  />
+                  <HelpText>한 달에 발급 가능한 쿠폰 수</HelpText>
+                </InputGroup>
+              </ValueGrid>
 
-            <DateGrid>
-              <InputGroup>
-                <Label>시작일</Label>
-                <Input
-                  type="date"
-                  name="valid_from"
-                  value={formData.valid_from}
+              <InputGroup style={{ marginTop: '1rem' }}>
+                <Label>유효 기간</Label>
+                <Select
+                  name="expected_duration"
+                  value={formData.expected_duration}
                   onChange={handleChange}
                   required
-                />
+                >
+                  {durationOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </Select>
+                <HelpText>쿠폰이 유효한 기간을 선택해주세요</HelpText>
               </InputGroup>
-
-              <InputGroup>
-                <Label>종료일</Label>
-                <Input
-                  type="date"
-                  name="valid_until"
-                  value={formData.valid_until}
-                  onChange={handleChange}
-                  required
-                />
-              </InputGroup>
-            </DateGrid>
-
-            <LimitSection>
-              <LimitTitle>발급 제한 설정</LimitTitle>
-
-              <LimitInputGroup>
-                <Label>일일 발급 제한</Label>
-                <SmallInput
-                  type="number"
-                  name="daily_limit"
-                  placeholder="10"
-                  value={formData.daily_limit}
-                  onChange={handleChange}
-                  min="1"
-                  required
-                />
-                <HelpText>하루에 발급할 수 있는 최대 쿠폰 수</HelpText>
-              </LimitInputGroup>
-
-              <LimitInputGroup>
-                <Label>총 발급 제한</Label>
-                <SmallInput
-                  type="number"
-                  name="total_limit"
-                  placeholder="300"
-                  value={formData.total_limit}
-                  onChange={handleChange}
-                  min="1"
-                  required
-                />
-                <HelpText>전체 기간 동안 발급할 수 있는 최대 쿠폰 수</HelpText>
-              </LimitInputGroup>
-            </LimitSection>
+            </ValueSection>
 
             {error && (
               <ErrorContainer>
@@ -543,10 +527,17 @@ const CouponSetupPage = () => {
               </ErrorContainer>
             )}
 
+            {success && (
+              <SuccessContainer>
+                <span>✅</span>
+                <SuccessText>{success}</SuccessText>
+              </SuccessContainer>
+            )}
+
             <SubmitButton
               type="button"
               onClick={handleSubmit}
-              disabled={isLoading}
+              disabled={isLoading || !isFormValid()}
             >
               {isLoading ? (
                 <>
@@ -566,11 +557,12 @@ const CouponSetupPage = () => {
             <InfoHeader>
               <InfoIcon>💡</InfoIcon>
               <InfoContent>
-                <InfoTitle>안내사항</InfoTitle>
+                <InfoTitle>쿠폰 정책 등록 안내</InfoTitle>
                 <InfoList>
-                  <InfoListItem>쿠폰 정책 등록 후 관리자가 제휴를 설정해드립니다</InfoListItem>
-                  <InfoListItem>제휴가 완료되면 QR 코드가 생성됩니다</InfoListItem>
-                  <InfoListItem>설정한 제한에 따라 쿠폰이 자동으로 발급됩니다</InfoListItem>
+                  <InfoListItem>정책 등록 후 제휴 게시글에서 다른 사장님과 제휴할 수 있습니다</InfoListItem>
+                  <InfoListItem>제휴 성사 시 QR 코드가 자동 생성됩니다</InfoListItem>
+                  <InfoListItem>월 한도는 자동으로 관리되며 초과 시 발급이 중단됩니다</InfoListItem>
+                  <InfoListItem>등록 후 수정도 가능하니 부담없이 설정해보세요</InfoListItem>
                 </InfoList>
               </InfoContent>
             </InfoHeader>
