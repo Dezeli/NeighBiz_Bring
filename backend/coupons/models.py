@@ -2,6 +2,8 @@ from django.db import models
 from stores.models import Store
 from accounts.models import ConsumerUser
 from common.enums import PartnershipDuration, CouponStatus
+from datetime import timedelta
+from django.utils import timezone
 
 
 class CouponPolicy(models.Model):
@@ -32,7 +34,6 @@ class Coupon(models.Model):
     user = models.ForeignKey(ConsumerUser, on_delete=models.CASCADE, related_name="coupons")
     policy = models.ForeignKey(CouponPolicy, on_delete=models.CASCADE, related_name="coupons")
 
-    slug = models.SlugField(unique=True, max_length=32)
     short_code = models.CharField(max_length=12, unique=True)
 
     status = models.CharField(
@@ -45,11 +46,21 @@ class Coupon(models.Model):
     used_at = models.DateTimeField(null=True, blank=True)
     expired_at = models.DateTimeField(null=True)
 
+
+    def save(self, *args, **kwargs):
+        if not self.expired_at and self.issued_at:
+            self.expired_at = self.issued_at + timedelta(hours=24)
+
+        # 만료 체크
+        if self.expired_at and self.expired_at < timezone.now() and self.status == CouponStatus.ACTIVE.value:
+            self.status = CouponStatus.EXPIRED.value
+
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.short_code} - {self.get_status_display()}"
 
     class Meta:
         indexes = [
             models.Index(fields=["short_code"]),
-            models.Index(fields=["slug"]),
         ]

@@ -2,6 +2,7 @@ from rest_framework import serializers
 from coupons.models import CouponPolicy
 from stores.models import Store
 from django.shortcuts import get_object_or_404
+from .models import Coupon
 
 class CouponPolicyCreateSerializer(serializers.ModelSerializer):
     description = serializers.CharField(
@@ -50,3 +51,39 @@ class CouponPolicySerializer(serializers.ModelSerializer):
             "expected_duration",
             "monthly_limit",
         ]
+
+
+class CouponPolicyUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CouponPolicy
+        fields = ["description", "expected_value", "expected_duration", "monthly_limit", "is_active"]
+        extra_kwargs = {field: {"required": False} for field in fields}
+
+
+
+class CouponSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Coupon
+        fields = [
+            "id",
+            "short_code",
+            "status",
+            "issued_at",
+            "used_at",
+            "expired_at",
+        ]
+        read_only_fields = fields
+
+
+class CouponSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Coupon
+        fields = [
+            "id",
+            "short_code",
+            "status",
+            "issued_at",
+            "used_at",
+            "expired_at",
+        ]
+        read_only_fields = fields

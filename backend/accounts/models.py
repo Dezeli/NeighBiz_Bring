@@ -56,6 +56,10 @@ class ConsumerUser(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     last_login = models.DateTimeField(null=True, blank=True)
 
+    @property
+    def is_authenticated(self):
+        return True
+    
     def __str__(self):
         return f"Consumer {self.phone_number or self.kakao_id}"
     

@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import api from '../utils/api';
-import { extractErrorMessage } from '../utils/response';
 import { useAuth } from '../context/AuthContext';
 
 const Container = styled.div`
@@ -186,6 +185,35 @@ const LoadingSpinner = styled.div`
   }
 `;
 
+const FindButtonsContainer = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+`;
+
+const FindButton = styled.button`
+  flex: 1;
+  padding: 0.75rem 1rem;
+  background: rgba(148, 163, 184, 0.1);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 10px;
+  color: #475569;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: rgba(148, 163, 184, 0.15);
+    border-color: rgba(148, 163, 184, 0.4);
+    color: #334155;
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+`;
+
 const SignupLink = styled.a`
   color: #0ea5e9;
   font-size: 0.875rem;
@@ -213,16 +241,42 @@ const OwnerLoginPage = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  // 디바이스 정보 생성 함수
+  const getDeviceInfo = () => {
+    const userAgent = navigator.userAgent;
+    let browser = 'Unknown';
+    let os = 'Unknown';
+
+    // 브라우저 감지
+    if (userAgent.includes('Chrome')) browser = 'Chrome';
+    else if (userAgent.includes('Firefox')) browser = 'Firefox';
+    else if (userAgent.includes('Safari')) browser = 'Safari';
+    else if (userAgent.includes('Edge')) browser = 'Edge';
+
+    // OS 감지
+    if (userAgent.includes('Windows')) os = 'Windows';
+    else if (userAgent.includes('Mac')) os = 'macOS';
+    else if (userAgent.includes('Linux')) os = 'Linux';
+    else if (userAgent.includes('Android')) os = 'Android';
+    else if (userAgent.includes('iOS')) os = 'iOS';
+
+    return `${browser} on ${os}`;
+  };
+
   const handleLogin = async (e) => {
     if (e) e.preventDefault();
     setError('');
     setIsLoading(true);
 
     try {
-      const res = await api.post('/auth/owner/login', { username, password });
+      const res = await api.post('/accounts/owner-login/', { 
+        username, 
+        password,
+        device_info: getDeviceInfo()
+      });
 
       if (!res.data.success) {
-        setError(extractErrorMessage(res.data));
+        setError(res.data.message || '로그인에 실패했습니다.');
         return;
       }
 
@@ -230,10 +284,22 @@ const OwnerLoginPage = () => {
       await login(access, refresh);
       navigate('/owner/mypage');
     } catch (err) {
-      setError(err.message || '로그인에 실패했습니다. 다시 시도해주세요.');
+      if (err.response && err.response.data) {
+        setError(err.response.data.message || '로그인에 실패했습니다.');
+      } else {
+        setError('로그인에 실패했습니다. 네트워크를 확인해주세요.');
+      }
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleFindId = () => {
+    navigate('/find-id');
+  };
+
+  const handleFindPassword = () => {
+    navigate('/reset-password');
   };
 
   return (
@@ -298,6 +364,15 @@ const OwnerLoginPage = () => {
               )}
             </LoginButton>
           </Form>
+
+          <FindButtonsContainer>
+            <FindButton type="button" onClick={handleFindId}>
+              아이디 찾기
+            </FindButton>
+            <FindButton type="button" onClick={handleFindPassword}>
+              비밀번호 찾기
+            </FindButton>
+          </FindButtonsContainer>
 
           <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
             <SignupLink href="/signup">

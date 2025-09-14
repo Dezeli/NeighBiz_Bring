@@ -1,13 +1,14 @@
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.exceptions import ValidationError
-from rest_framework import status
 from common.enums import ProposalStatus
+from common.s3 import generate_presigned_url
 from common.response import success, failure
 from .models import Proposal
 from .serializers import *
-
+import qrcode
+import io
+import boto3
 
 
 class ProposalCreateView(APIView):
@@ -65,16 +66,78 @@ class ProposalActionView(APIView):
         return Response(success(message=message))
 
 
-class QRCodeImageView(APIView):
+class QRCodeView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        serializer = QRCodeSerializer(context={"user": request.user})
+        user = request.user
 
+        # 사장님 → 가게
         try:
-            data = serializer.data
-            return Response(success(data=data, message="QR 이미지 조회 성공"))
-        except ValidationError as e:
-            return Response(failure(message="QR 생성 실패", data=e.detail), status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            return Response(failure(message="서버 오류 발생", data={"error": str(e)}), status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            store = Store.objects.get(owner=user)
+        except Store.DoesNotExist:
+            return Response(
+                failure(message="가게 정보가 존재하지 않습니다."),
+                status=404,
+            )
+
+        # 내 가게가 참여한 활성 파트너쉽 조회
+        partnership = Partnership.objects.filter(
+            status="active"
+        ).filter(
+            models.Q(store_a=store) | models.Q(store_b=store)
+        ).first()
+
+        if not partnership:
+            return Response(
+                failure(message="활성화된 제휴가 없습니다."),
+                status=404
+            )
+
+        # 가게 기준으로 slug 선택
+        if store == partnership.store_a:
+            slug = partnership.slug_for_a
+        else:
+            slug = partnership.slug_for_b
+
+        # S3 Key
+        bucket_name = settings.AWS_S3_BUCKET
+        key = f"qrcodes/{slug}.png"
+        s3_client = boto3.client(
+            "s3",
+            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+            region_name=settings.AWS_REGION,
+        )
+
+        # 존재 여부 확인
+        try:
+            s3_client.head_object(Bucket=bucket_name, Key=key)
+            exists = True
+        except s3_client.exceptions.ClientError:
+            exists = False
+
+        # 없으면 생성 후 업로드
+        if not exists:
+            qr_img = qrcode.make(f"{settings.APP_BASE_URL}/issue/{slug}")
+            buffer = io.BytesIO()
+            qr_img.save(buffer, format="PNG")
+            buffer.seek(0)
+
+            s3_client.upload_fileobj(
+                buffer,
+                bucket_name,
+                key,
+                ExtraArgs={"ContentType": "image/png"}
+            )
+
+        # presigned URL
+        qr_url = generate_presigned_url(key)
+
+        serializer = QRCodeSerializer({
+            "partnership_id": partnership.id,
+            "slug": slug,
+            "qr_code_url": qr_url
+        })
+
+        return Response(success(data=serializer.data, message="QR 이미지 조회 성공"))

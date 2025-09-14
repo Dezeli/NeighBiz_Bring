@@ -2,6 +2,8 @@ import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import OwnerLandingPage from './pages/OwnerLandingPage';
 import OwnerLoginPage from './pages/OwnerLoginPage';
+import FindIdPage from './pages/FindIdPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 import OwnerSignupPage from './pages/OwnerSignupPage';
 import OwnerMyPage from './pages/OwnerMyPage';
 import CouponSetupPage from './pages/CouponSetupPage';
@@ -28,6 +30,8 @@ function App() {
     <Routes>
       <Route path="/" element={<OwnerLandingPage />} />
       <Route path="/login" element={<OwnerLoginPage />} />
+      <Route path="/find-id" element={<FindIdPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/signup" element={<OwnerSignupPage />} />
       <Route
         path="/owner/mypage"

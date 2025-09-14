@@ -135,12 +135,18 @@ const UserInfoBox = styled.div`
   background: rgba(248, 250, 252, 0.8);
   border-radius: 12px;
   padding: 1rem;
+  text-align: left;
 `;
 
 const InfoRow = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 0.5rem;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
 `;
 
 const InfoLabel = styled.span`
@@ -208,7 +214,7 @@ const StatusDot = styled.div`
   }
 `;
 
-const MerchantName = styled.h3`
+const StoreName = styled.h3`
   font-size: 1.25rem;
   font-weight: 700;
   color: #374151;
@@ -317,138 +323,29 @@ const ActionButton = styled.button`
   }
 `;
 
-const ProposalSection = styled.div`
-  margin-bottom: 1.5rem;
-  
-  &:last-child {
-    margin-bottom: 0;
-  }
-`;
-
-const ProposalTitle = styled.h4`
-  font-size: 1rem;
-  font-weight: 600;
-  color: #374151;
-  margin-bottom: 0.75rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  text-align: left;
-`;
-
-const ProposalItem = styled.div`
+const CouponPolicyBox = styled.div`
   background: rgba(248, 250, 252, 0.8);
-  border: 1px solid rgba(226, 232, 240, 0.6);
   border-radius: 12px;
   padding: 1rem;
-  margin-bottom: 0.75rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    background: white;
-    border-color: rgba(16, 185, 129, 0.3);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  }
-
-  &:last-child {
-    margin-bottom: 0;
-  }
-`;
-
-const ProposalHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-`;
-
-const ProposalInfo = styled.div`
-  flex: 1;
+  margin-bottom: 1rem;
   text-align: left;
 `;
 
-const ProposalName = styled.h5`
-  font-size: 0.875rem;
-  font-weight: 600;
+const PolicyLabel = styled.p`
   color: #374151;
-  margin-bottom: 0.25rem;
-`;
-
-const ProposalMeta = styled.p`
-  font-size: 0.75rem;
-  color: #6b7280;
-  margin: 0;
-`;
-
-const ProposalStatusBadge = styled.div`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.25rem 0.5rem;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  
-  ${props => {
-    switch (props.status) {
-      case 'pending':
-        return `
-          background: rgba(251, 191, 36, 0.1);
-          color: #92400e;
-        `;
-      case 'accepted':
-        return `
-          background: rgba(16, 185, 129, 0.1);
-          color: #065f46;
-        `;
-      case 'rejected':
-        return `
-          background: rgba(239, 68, 68, 0.1);
-          color: #991b1b;
-        `;
-      default:
-        return `
-          background: rgba(107, 114, 128, 0.1);
-          color: #374151;
-        `;
-    }
-  }}
-`;
-
-const ProposalStatusDot = styled.div`
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  
-  ${props => {
-    switch (props.status) {
-      case 'pending':
-        return 'background: #fbbf24;';
-      case 'accepted':
-        return 'background: #10b981;';
-      case 'rejected':
-        return 'background: #ef4444;';
-      default:
-        return 'background: #6b7280;';
-    }
-  }}
-`;
-
-const EmptyProposalState = styled.div`
-  text-align: center;
-  padding: 2rem 0;
-  color: #6b7280;
-`;
-
-const EmptyProposalText = styled.p`
   font-size: 0.875rem;
+  font-weight: 600;
   margin-bottom: 0.5rem;
 `;
 
-const EmptyProposalSubtext = styled.p`
-  font-size: 0.75rem;
-  margin: 0;
+const PolicyValue = styled.p`
+  color: #6b7280;
+  font-size: 0.875rem;
+  margin-bottom: 0.75rem;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
 `;
 
 const StatsButton = styled.button`
@@ -564,39 +461,61 @@ const Footer = styled.div`
 const OwnerMyPage = () => {
   const navigate = useNavigate();
   const { user, logout, apiCall } = useAuth();
-  const [partnership, setPartnership] = useState(null);
-  const [partnershipStatus, setPartnershipStatus] = useState(null);
-  const [sentProposals, setSentProposals] = useState([]);
-  const [receivedProposals, setReceivedProposals] = useState([]);
+  const [ownerProfile, setOwnerProfile] = useState(null);
+  const [couponPolicy, setCouponPolicy] = useState(null);
+  const [qrData, setQrData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
+      setError('');
+      
       try {
-        const requests = [
-          apiCall({ method: 'GET', url: '/merchants/mypage' }),
-          apiCall({ method: 'GET', url: '/owner/partnership/status-check/' })
-        ];
+        // 1. 사장님 프로필 정보 가져오기
+        const profileResponse = await apiCall({
+          method: 'GET',
+          url: '/accounts/owner-profile/',
+        });
 
-        const [partnershipResponse, statusResponse] = await Promise.all(requests);
-        
-        setPartnership(partnershipResponse.data || null);
-        setPartnershipStatus(statusResponse.data || null);
-
-        // 쿠폰 정책이 있고 파트너십이 없을 때만 제안 데이터 가져오기
-        if (statusResponse.data?.has_coupon_policy && !statusResponse.data?.has_active_partnership) {
-          const proposalRequests = [
-            apiCall({ method: 'GET', url: '/proposals/sent/' }),
-            apiCall({ method: 'GET', url: '/proposals/received/' })
-          ];
-
-          const [sentResponse, receivedResponse] = await Promise.all(proposalRequests);
-          setSentProposals(sentResponse.data || []);
-          setReceivedProposals(receivedResponse.data || []);
+        if (profileResponse?.data) {
+          setOwnerProfile(profileResponse.data);
         }
+
+        // 2. 쿠폰 정책 가져오기 (있을 때만)
+        try {
+          const policyResponse = await apiCall({
+            method: 'GET',
+            url: '/coupons/policy/',
+          });
+
+          if (policyResponse?.data) {
+            setCouponPolicy(policyResponse.data);
+          }
+        } catch (err) {
+          // 쿠폰 정책이 없을 수 있으므로 에러 무시
+          console.log('No coupon policy found');
+        }
+
+        // 3. QR 이미지 가져오기 (제휴가 있을 때만)
+        try {
+          const qrResponse = await apiCall({
+            method: 'GET',
+            url: '/partnerships/qr-image/',
+          });
+
+          if (qrResponse?.data) {
+            setQrData(qrResponse.data);
+          }
+        } catch (err) {
+          // QR이 없을 수 있으므로 에러 무시
+          console.log('No QR data found');
+        }
+
       } catch (err) {
-        setPartnership(null);
-        setPartnershipStatus(null);
+        console.error('Failed to fetch data:', err);
+        setError('데이터를 불러오는데 실패했습니다.');
       } finally {
         setLoading(false);
       }
@@ -614,113 +533,136 @@ const OwnerMyPage = () => {
     }
   };
 
-  const getStatusText = (status) => {
-    switch (status) {
-      case 'pending': return '대기중';
-      case 'accepted': return '승인됨';
-      case 'rejected': return '거절됨';
-      default: return status;
-    }
-  };
-
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ko-KR', {
-      month: 'short',
-      day: 'numeric',
-    });
-  };
-
   const formatPrice = (price) => {
+    if (!price) return '-';
     return price.toLocaleString('ko-KR');
   };
 
-  const canEditPolicy = () => {
-    return partnershipStatus && 
-           partnershipStatus.has_coupon_policy &&
-           !partnershipStatus.has_received_proposal &&
-           !partnershipStatus.has_sent_proposal &&
-           !partnershipStatus.has_active_partnership;
+  const formatDuration = (duration) => {
+    const durationMap = {
+      'day': '1일',
+      'week': '1주일',
+      '1_month': '1개월',
+      '3_months': '3개월',
+      '6_months': '6개월',
+      'unlimited': '무기한',
+    };
+    return durationMap[duration] || duration;
   };
 
-  const canShowStats = () => {
-    return partnership && partnership.partnership_status === 'active';
+  const getCategoryIcon = (category) => {
+    const categoryIcons = {
+      cafe: '☕',
+      restaurant: '🍽️',
+      bakery: '🥐',
+      pub: '🍺',
+      fitness: '💪',
+      study: '📚',
+      florist: '🌸',
+      convenience: '🏪',
+      entertain: '🎵',
+      other: '🛍️'
+    };
+    return categoryIcons[category] || '🏪';
   };
 
-  const renderPartnershipContent = () => {
-    if (!partnership) {
+  const getCategoryName = (category) => {
+    const categoryNames = {
+      cafe: '카페',
+      restaurant: '음식점',
+      bakery: '베이커리',
+      pub: '주점',
+      fitness: '운동',
+      study: '독서실',
+      florist: '꽃집',
+      convenience: '편의점',
+      entertain: '유흥시설',
+      other: '기타'
+    };
+    return categoryNames[category] || category;
+  };
+
+  const renderContent = () => {
+    if (!ownerProfile) {
       return (
         <div style={{ textAlign: 'center', padding: '2rem 0' }}>
           <EmptyStateIcon type="error">❌</EmptyStateIcon>
           <EmptyStateTitle>정보 로드 실패</EmptyStateTitle>
-          <EmptyStateDescription>가게 정보를 불러올 수 없습니다.</EmptyStateDescription>
+          <EmptyStateDescription>프로필 정보를 불러올 수 없습니다.</EmptyStateDescription>
         </div>
       );
     }
 
-    switch (partnership.partnership_status) {
-      case 'active':
-        return (
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ marginBottom: '1.5rem' }}>
-              <StatusBadge status="active">
-                <StatusDot status="active" />
-                제휴 활성화
-              </StatusBadge>
-              <MerchantName>🏪 {partnership.merchant_name}</MerchantName>
-              <StatusText>제휴가 활성화되었습니다</StatusText>
-            </div>
-
-            {partnership.qr_image_url && (
-              <QRSection>
-                <QRLabel>고객용 QR 코드</QRLabel>
-                <QRImageWrapper>
-                  <QRImage
-                    src={partnership.qr_image_url}
-                    alt="QR 코드"
-                  />
-                </QRImageWrapper>
-                <QRDescription>
-                  고객이 QR 코드를 스캔하면 제휴 쿠폰을 발급받습니다
-                </QRDescription>
-              </QRSection>
-            )}
-          </div>
-        );
-
-      case 'pending':
-        return (
-          <div style={{ textAlign: 'center', padding: '2rem 0' }}>
-            <EmptyStateIcon type="pending">⏳</EmptyStateIcon>
-            <EmptyStateTitle>제휴 심사중</EmptyStateTitle>
-            <EmptyStateDescription>
-              {partnership.merchant_name}의 제휴 승인을 기다리고 있습니다.<br />
-              관리자 승인 후 QR 코드가 생성됩니다.
-            </EmptyStateDescription>
-            <StatusBadge status="pending">
-              <StatusDot status="pending" />
-              승인 대기중
+    // QR이 있으면 제휴 활성화 상태
+    if (qrData) {
+      return (
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ marginBottom: '1.5rem' }}>
+            <StatusBadge status="active">
+              <StatusDot status="active" />
+              제휴 활성화
             </StatusBadge>
+            <StoreName>
+              {getCategoryIcon(ownerProfile.store?.category)} {ownerProfile.store?.name}
+            </StoreName>
+            <StatusText>제휴가 활성화되었습니다</StatusText>
           </div>
-        );
 
-      case 'none':
-      default:
-        return (
-          <div style={{ textAlign: 'center', padding: '2rem 0' }}>
-            <EmptyStateIcon>🤔</EmptyStateIcon>
-            <EmptyStateTitle>제휴 대기중</EmptyStateTitle>
-            <EmptyStateDescription>
-              {partnership.merchant_name}<br />
-              먼저 쿠폰 정책을 설정해보세요.
-            </EmptyStateDescription>
-            <ActionButton onClick={() => window.location.href = '/owner/coupon-setup'}>
-              <span>🎫</span>
-              쿠폰 정책 설정하기
-            </ActionButton>
-          </div>
-        );
+          <QRSection>
+            <QRLabel>고객용 QR 코드</QRLabel>
+            <QRImageWrapper>
+              <QRImage
+                src={qrData.qr_code_url}
+                alt="QR 코드"
+              />
+            </QRImageWrapper>
+            <QRDescription>
+              고객이 QR 코드를 스캔하면 제휴 쿠폰을 발급받습니다
+            </QRDescription>
+          </QRSection>
+        </div>
+      );
     }
+
+    // 쿠폰 정책이 있으면 정책 표시
+    if (couponPolicy) {
+      return (
+        <div style={{ textAlign: 'center' }}>
+          <StatusBadge status="pending">
+            <StatusDot status="pending" />
+            쿠폰 정책 설정 완료
+          </StatusBadge>
+          <StoreName>
+            {getCategoryIcon(ownerProfile.store?.category)} {ownerProfile.store?.name}
+          </StoreName>
+          <StatusText>제휴 게시글에서 다른 사장님들과 제휴해보세요</StatusText>
+          
+          <CouponPolicyBox>
+            <PolicyLabel>🎫 설정된 쿠폰 정책</PolicyLabel>
+            <PolicyValue><strong>설명:</strong> {couponPolicy.description}</PolicyValue>
+            <PolicyValue><strong>예상 가치:</strong> {formatPrice(couponPolicy.expected_value)}원</PolicyValue>
+            <PolicyValue><strong>월 한도:</strong> {couponPolicy.monthly_limit}매</PolicyValue>
+            <PolicyValue><strong>유효 기간:</strong> {formatDuration(couponPolicy.expected_duration)}</PolicyValue>
+          </CouponPolicyBox>
+        </div>
+      );
+    }
+
+    // 쿠폰 정책이 없으면 설정 유도
+    return (
+      <div style={{ textAlign: 'center', padding: '2rem 0' }}>
+        <EmptyStateIcon>🤔</EmptyStateIcon>
+        <EmptyStateTitle>제휴 대기중</EmptyStateTitle>
+        <EmptyStateDescription>
+          {ownerProfile.store?.name}<br />
+          먼저 쿠폰 정책을 설정해보세요.
+        </EmptyStateDescription>
+        <ActionButton onClick={() => navigate('/owner/coupon-setup')}>
+          <span>🎫</span>
+          쿠폰 정책 설정하기
+        </ActionButton>
+      </div>
+    );
   };
 
   if (!user) {
@@ -743,6 +685,19 @@ const OwnerMyPage = () => {
           <LoadingContainer>
             <LoadingSpinner />
             <LoadingText>불러오는 중...</LoadingText>
+          </LoadingContainer>
+        </ContentWrapper>
+      </Container>
+    );
+  }
+
+  if (error) {
+    return (
+      <Container>
+        <ContentWrapper>
+          <LoadingContainer>
+            <EmptyStateIcon type="error">❌</EmptyStateIcon>
+            <LoadingText>{error}</LoadingText>
           </LoadingContainer>
         </ContentWrapper>
       </Container>
@@ -775,100 +730,42 @@ const OwnerMyPage = () => {
             <ProfileIcon>
               <span style={{ fontSize: '1.5rem', color: 'white' }}>👤</span>
             </ProfileIcon>
-            <ProfileTitle>사장님 마이페이지</ProfileTitle>
+            <ProfileTitle>{ownerProfile?.owner?.name || '사장님'}</ProfileTitle>
           </ProfileSection>
 
           <UserInfoBox>
             <InfoRow>
               <InfoLabel>📱 전화번호</InfoLabel>
-              <InfoValue>{user.phone_number}</InfoValue>
+              <InfoValue>{ownerProfile?.owner?.phone || '-'}</InfoValue>
+            </InfoRow>
+            <InfoRow>
+              <InfoLabel>🏪 가게명</InfoLabel>
+              <InfoValue>{ownerProfile?.store?.name || '-'}</InfoValue>
+            </InfoRow>
+            <InfoRow>
+              <InfoLabel>📍 주소</InfoLabel>
+              <InfoValue>{ownerProfile?.store?.address || '-'}</InfoValue>
+            </InfoRow>
+            <InfoRow>
+              <InfoLabel>🏷️ 카테고리</InfoLabel>
+              <InfoValue>{getCategoryName(ownerProfile?.store?.category) || '-'}</InfoValue>
             </InfoRow>
           </UserInfoBox>
         </Card>
 
         <Card>
-          {renderPartnershipContent()}
+          {renderContent()}
         </Card>
 
-        {/* 제안 관리 섹션 */}
-        {partnershipStatus?.has_coupon_policy && !partnershipStatus?.has_active_partnership && (
-          <Card>
-            {sentProposals.length > 0 && (
-              <ProposalSection>
-                <ProposalTitle>
-                  <span>📤</span>
-                  보낸 제안 ({sentProposals.length})
-                </ProposalTitle>
-                {sentProposals.slice(0, 2).map((proposal) => (
-                  <ProposalItem 
-                    key={proposal.proposal_id}
-                    onClick={() => navigate(`/owner/proposal/received/${proposal.proposal_id}`)}
-                  >
-                    <ProposalHeader>
-                      <ProposalInfo>
-                        <ProposalName>{proposal.target_merchant.name}</ProposalName>
-                        <ProposalMeta>
-                          {formatPrice(proposal.target_post.expected_value)}원 • {formatDate(proposal.created_at)}
-                        </ProposalMeta>
-                      </ProposalInfo>
-                      <ProposalStatusBadge status={proposal.status}>
-                        <ProposalStatusDot status={proposal.status} />
-                        {getStatusText(proposal.status)}
-                      </ProposalStatusBadge>
-                    </ProposalHeader>
-                  </ProposalItem>
-                ))}
-              </ProposalSection>
-            )}
-
-            {receivedProposals.length > 0 && (
-              <ProposalSection>
-                <ProposalTitle>
-                  <span>📥</span>
-                  받은 제안 ({receivedProposals.length})
-                </ProposalTitle>
-                {receivedProposals.slice(0, 2).map((proposal) => (
-                  <ProposalItem 
-                    key={proposal.proposal_id}
-                    onClick={() => navigate(`/owner/proposal/received/${proposal.proposal_id}`)}
-                  >
-                    <ProposalHeader>
-                      <ProposalInfo>
-                        <ProposalName>{proposal.proposer_merchant.name}</ProposalName>
-                        <ProposalMeta>
-                          {formatPrice(proposal.post.expected_value)}원 • {formatDate(proposal.created_at)}
-                        </ProposalMeta>
-                      </ProposalInfo>
-                      <ProposalStatusBadge status={proposal.status}>
-                        <ProposalStatusDot status={proposal.status} />
-                        {getStatusText(proposal.status)}
-                      </ProposalStatusBadge>
-                    </ProposalHeader>
-                  </ProposalItem>
-                ))}
-              </ProposalSection>
-            )}
-
-            {sentProposals.length === 0 && receivedProposals.length === 0 && (
-              <EmptyProposalState>
-                <EmptyProposalText>아직 제안이 없습니다</EmptyProposalText>
-                <EmptyProposalSubtext>
-                  게시글 목록에서 제휴를 신청해보세요
-                </EmptyProposalSubtext>
-              </EmptyProposalState>
-            )}
-          </Card>
-        )}
-
         {/* 액션 버튼들 */}
-        {canShowStats() && (
+        {qrData && (
           <StatsButton onClick={() => navigate('/owner/stats')}>
             <span>📊</span>
             통계 보기
           </StatsButton>
         )}
 
-        {canEditPolicy() && (
+        {couponPolicy && (
           <EditPolicyButton onClick={() => navigate('/owner/coupon-setup')}>
             <span>⚙️</span>
             쿠폰 정책 수정

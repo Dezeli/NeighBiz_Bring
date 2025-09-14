@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
-import { extractErrorMessage } from '../utils/response';
 
 const Container = styled.div`
   min-height: 100vh;
@@ -73,7 +72,7 @@ const ProgressBar = styled.div`
 `;
 
 const ProgressStep = styled.div`
-  width: 80px;
+  width: 60px;
   height: 4px;
   border-radius: 2px;
   background: ${props => props.active ? 
@@ -122,6 +121,11 @@ const Label = styled.label`
     content: ' *';
     color: #ef4444;
   }
+`;
+
+const InputRow = styled.div`
+  display: flex;
+  gap: 0.5rem;
 `;
 
 const Input = styled.input`
@@ -199,6 +203,32 @@ const Textarea = styled.textarea`
   }
 `;
 
+const SendButton = styled.button`
+  min-width: 100px;
+  height: 48px;
+  background: ${props => props.disabled ? '#f3f4f6' : 'linear-gradient(135deg, #10b981 0%, #0ea5e9 100%)'};
+  color: ${props => props.disabled ? '#9ca3af' : 'white'};
+  border: none;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
+  transition: all 0.3s ease;
+  white-space: nowrap;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  }
+`;
+
+const Timer = styled.span`
+  color: #ef4444;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-left: 0.5rem;
+`;
+
 const FileInputWrapper = styled.div`
   position: relative;
   display: inline-block;
@@ -247,6 +277,70 @@ const UploadStatus = styled.div`
   color: #065f46;
   font-size: 0.875rem;
   text-align: center;
+`;
+
+const BusinessHoursGrid = styled.div`
+  display: grid;
+  gap: 1rem;
+  margin-top: 0.5rem;
+`;
+
+const DayContainer = styled.div`
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1rem;
+  background: rgba(249, 250, 251, 0.5);
+`;
+
+const DayRow = styled.div`
+  display: grid;
+  grid-template-columns: 60px 1fr;
+  gap: 0.5rem;
+  align-items: center;
+`;
+
+const DayLabel = styled.div`
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+`;
+
+const TimeInputs = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+`;
+
+const TimeSelect = styled.select`
+  width: 80px;
+  height: 36px;
+  padding: 0 0.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  text-align: center;
+
+  &:focus {
+    outline: none;
+    border-color: #10b981;
+  }
+`;
+
+const CheckboxLabel = styled.label`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+  cursor: pointer;
+`;
+
+const BreakTimeInputs = styled.div`
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-left: 1rem;
 `;
 
 const ErrorContainer = styled.div`
@@ -358,32 +452,168 @@ const Footer = styled.div`
 
 const OwnerSignupPage = () => {
   const navigate = useNavigate();
-
+  
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [imageUploading, setImageUploading] = useState(false);
+  const [licenseUploading, setLicenseUploading] = useState(false);
   const [error, setError] = useState('');
+  const [timer, setTimer] = useState(0);
+  const [isVerificationSent, setIsVerificationSent] = useState(false);
+  const [isPhoneVerified, setIsPhoneVerified] = useState(false);
 
   const [formData, setFormData] = useState({
-    phone_number: '',
     username: '',
     password: '',
     name: '',
-    phone: '',
-    address: '',
-    category: '',
-    description: '',
-    image_url: '',
-    business_hours: '',
+    phone_number: '',
+    verification_code: '',
+    business_license_image: '',
+    store: {
+      name: '',
+      phone: '',
+      address: '',
+      category: '',
+      description: '',
+      image_url: '',
+      business_hours: {
+        mon: { open: '10:00', close: '20:00', closed: false, hasBreak: false, breakStart: '14:00', breakEnd: '16:00' },
+        tue: { open: '10:00', close: '20:00', closed: false, hasBreak: false, breakStart: '14:00', breakEnd: '16:00' },
+        wed: { open: '10:00', close: '20:00', closed: false, hasBreak: false, breakStart: '14:00', breakEnd: '16:00' },
+        thu: { open: '10:00', close: '20:00', closed: false, hasBreak: false, breakStart: '14:00', breakEnd: '16:00' },
+        fri: { open: '10:00', close: '20:00', closed: false, hasBreak: false, breakStart: '14:00', breakEnd: '16:00' },
+        sat: { open: '10:00', close: '20:00', closed: false, hasBreak: false, breakStart: '14:00', breakEnd: '16:00' },
+        sun: { open: '10:00', close: '20:00', closed: false, hasBreak: false, breakStart: '14:00', breakEnd: '16:00' }
+      }
+    }
   });
+
+  // 타이머 효과
+  useEffect(() => {
+    let interval = null;
+    if (timer > 0) {
+      interval = setInterval(() => {
+        setTimer(timer => timer - 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [timer]);
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const formatPhoneNumber = (value) => {
+    return value.replace(/\D/g, '');
+  };
+
+  // 시간 옵션 생성 (0분, 30분만)
+  const generateTimeOptions = () => {
+    const options = [];
+    for (let hour = 0; hour < 24; hour++) {
+      const hourStr = hour.toString().padStart(2, '0');
+      options.push(`${hourStr}:00`);
+      options.push(`${hourStr}:30`);
+    }
+    return options;
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (name.startsWith('store.')) {
+      const storeField = name.split('.')[1];
+      setFormData(prev => ({
+        ...prev,
+        store: { ...prev.store, [storeField]: value }
+      }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
     setError('');
   };
 
-  const handleImageUpload = async (e) => {
+  const handleBusinessHoursChange = (day, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      store: {
+        ...prev.store,
+        business_hours: {
+          ...prev.store.business_hours,
+          [day]: {
+            ...prev.store.business_hours[day],
+            [field]: value
+          }
+        }
+      }
+    }));
+  };
+
+  const handleSendCode = async () => {
+    setError('');
+    setIsLoading(true);
+
+    const formattedPhone = formatPhoneNumber(formData.phone_number);
+    if (formattedPhone.length !== 11) {
+      setError('올바른 전화번호를 입력해주세요.');
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const res = await api.post('/accounts/phone-verify-request/', {
+        phone_number: formattedPhone
+      });
+
+      if (!res.data.success) {
+        setError(res.data.message || '인증번호 발송에 실패했습니다.');
+        return;
+      }
+
+      setTimer(180); // 3분
+      setIsVerificationSent(true);
+      setError('');
+    } catch (err) {
+      if (err.response && err.response.data) {
+        setError(err.response.data.message || '인증번호 발송에 실패했습니다.');
+      } else {
+        setError('인증번호 발송에 실패했습니다. 네트워크를 확인해주세요.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyCode = async () => {
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const res = await api.post('/accounts/phone-verify/', {
+        phone_number: formatPhoneNumber(formData.phone_number),
+        code: formData.verification_code
+      });
+
+      if (!res.data.success) {
+        setError(res.data.message || '인증번호 확인에 실패했습니다.');
+        return;
+      }
+
+      setIsPhoneVerified(true);
+      setError('');
+    } catch (err) {
+      if (err.response && err.response.data) {
+        setError(err.response.data.message || '인증번호 확인에 실패했습니다.');
+      } else {
+        setError('인증번호 확인에 실패했습니다. 네트워크를 확인해주세요.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleImageUpload = async (e, imageType) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -397,20 +627,22 @@ const OwnerSignupPage = () => {
       return;
     }
 
-    setImageUploading(true);
+    const setUploading = imageType === 'store_image' ? setImageUploading : setLicenseUploading;
+    setUploading(true);
     setError('');
 
     try {
-      const presignRes = await api.post('/merchants/cover/presign/', {
-        content_type: file.type,
+      const presignRes = await api.post('/upload/image/', {
         filename: file.name,
+        content_type: file.type,
+        image_type: imageType
       });
 
       if (!presignRes.data.success) {
         throw new Error('업로드 URL 생성에 실패했습니다.');
       }
 
-      const { upload_url, image_url } = presignRes.data.data;
+      const { upload_url, key } = presignRes.data.data;
 
       const uploadRes = await fetch(upload_url, {
         method: 'PUT',
@@ -424,22 +656,31 @@ const OwnerSignupPage = () => {
         throw new Error('이미지 업로드에 실패했습니다.');
       }
 
-      setFormData((prev) => ({ ...prev, image_url }));
+      if (imageType === 'store_image') {
+        setFormData(prev => ({
+          ...prev,
+          store: { ...prev.store, image_url: `https://neighbiz-dev.s3.amazonaws.com/${key}` }
+        }));
+      } else {
+        setFormData(prev => ({ ...prev, business_license_image: key }));
+      }
     } catch (err) {
       setError(err.message || '이미지 업로드 중 오류가 발생했습니다.');
     } finally {
-      setImageUploading(false);
+      setUploading(false);
     }
   };
 
   const validateStep = (step) => {
     switch (step) {
       case 1:
-        return formData.phone_number.trim() && formData.username.trim() && formData.password.trim();
+        return formData.username.trim() && formData.password.trim() && formData.name.trim() && isPhoneVerified;
       case 2:
-        return formData.name.trim() && formData.phone.trim() && formData.address.trim() && formData.category.trim();
+        return formData.store.name.trim() && formData.store.phone.trim() && formData.store.address.trim() && formData.store.category.trim();
       case 3:
-        return formData.description.trim() && formData.image_url.trim() && formData.business_hours.trim();
+        return formData.store.description.trim() && formData.store.image_url.trim();
+      case 4:
+        return formData.business_license_image.trim();
       default:
         return false;
     }
@@ -447,7 +688,7 @@ const OwnerSignupPage = () => {
 
   const nextStep = () => {
     if (validateStep(currentStep)) {
-      setCurrentStep((prev) => prev + 1);
+      setCurrentStep(prev => prev + 1);
       setError('');
     } else {
       setError('모든 필수 항목을 입력해주세요.');
@@ -455,7 +696,7 @@ const OwnerSignupPage = () => {
   };
 
   const prevStep = () => {
-    setCurrentStep((prev) => prev - 1);
+    setCurrentStep(prev => prev - 1);
     setError('');
   };
 
@@ -464,18 +705,50 @@ const OwnerSignupPage = () => {
     setIsLoading(true);
 
     try {
-      const res = await api.post('/auth/owner/signup', formData);
+      // 영업시간 데이터 변환 (break 배열 형태로)
+      const transformedBusinessHours = {};
+      Object.entries(formData.store.business_hours).forEach(([day, hours]) => {
+        if (hours.closed) {
+          transformedBusinessHours[day] = { closed: true };
+        } else {
+          const dayData = {
+            open: hours.open,
+            close: hours.close
+          };
+          
+          if (hours.hasBreak) {
+            dayData.break = [hours.breakStart, hours.breakEnd];
+          }
+          
+          transformedBusinessHours[day] = dayData;
+        }
+      });
+
+      const res = await api.post('/accounts/owner-signup/', {
+        username: formData.username,
+        password: formData.password,
+        name: formData.name,
+        phone_number: formatPhoneNumber(formData.phone_number),
+        business_license_image: formData.business_license_image,
+        store: {
+          ...formData.store,
+          business_hours: transformedBusinessHours
+        }
+      });
 
       if (!res.data.success) {
-        setError(extractErrorMessage(res.data));
+        setError(res.data.message || '회원가입에 실패했습니다.');
         return;
       }
 
-      alert('🎉 회원가입이 완료되었습니다!\n로그인 페이지로 이동합니다.');
+      alert('회원가입이 완료되었습니다!\n로그인 페이지로 이동합니다.');
       navigate('/login');
     } catch (err) {
-      const msg = extractErrorMessage(err.response?.data);
-      setError(msg || '회원가입 중 오류가 발생했습니다.');
+      if (err.response && err.response.data) {
+        setError(err.response.data.message || '회원가입 중 오류가 발생했습니다.');
+      } else {
+        setError('회원가입 중 오류가 발생했습니다. 네트워크를 확인해주세요.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -487,16 +760,6 @@ const OwnerSignupPage = () => {
         return (
           <>
             <StepTitle>계정 정보</StepTitle>
-            <InputGroup>
-              <Label>전화번호</Label>
-              <Input 
-                name="phone_number" 
-                placeholder="전화번호를 입력하세요" 
-                value={formData.phone_number} 
-                onChange={handleChange}
-                required
-              />
-            </InputGroup>
             <InputGroup>
               <Label>아이디</Label>
               <Input 
@@ -518,6 +781,63 @@ const OwnerSignupPage = () => {
                 required
               />
             </InputGroup>
+            <InputGroup>
+              <Label>사장님 이름</Label>
+              <Input 
+                name="name" 
+                placeholder="사장님 이름을 입력하세요" 
+                value={formData.name} 
+                onChange={handleChange}
+                required
+              />
+            </InputGroup>
+            <InputGroup>
+              <Label>전화번호</Label>
+              <InputRow>
+                <Input
+                  type="tel"
+                  name="phone_number"
+                  placeholder="01012345678"
+                  value={formData.phone_number}
+                  onChange={handleChange}
+                  disabled={isLoading || isPhoneVerified}
+                  maxLength={11}
+                />
+                <SendButton
+                  type="button"
+                  onClick={handleSendCode}
+                  disabled={isLoading || formatPhoneNumber(formData.phone_number).length !== 11 || isPhoneVerified}
+                >
+                  {isLoading ? <LoadingSpinner /> : (isPhoneVerified ? '인증완료' : '인증요청')}
+                </SendButton>
+              </InputRow>
+            </InputGroup>
+            {isVerificationSent && !isPhoneVerified && (
+              <InputGroup>
+                <Label>
+                  인증번호
+                  {timer > 0 && <Timer>{formatTime(timer)}</Timer>}
+                </Label>
+                <InputRow>
+                  <Input
+                    type="text"
+                    name="verification_code"
+                    placeholder="인증번호 6자리를 입력하세요"
+                    value={formData.verification_code}
+                    onChange={handleChange}
+                    disabled={isLoading}
+                    maxLength={6}
+                  />
+                  <SendButton
+                    type="button"
+                    onClick={handleVerifyCode}
+                    disabled={isLoading || formData.verification_code.length !== 6 || timer === 0}
+                  >
+                    {isLoading ? <LoadingSpinner /> : '확인'}
+                  </SendButton>
+                </InputRow>
+              </InputGroup>
+            )}
           </>
         );
       case 2:
@@ -527,9 +847,9 @@ const OwnerSignupPage = () => {
             <InputGroup>
               <Label>가게명</Label>
               <Input 
-                name="name" 
+                name="store.name" 
                 placeholder="가게명을 입력하세요" 
-                value={formData.name} 
+                value={formData.store.name} 
                 onChange={handleChange}
                 required
               />
@@ -537,9 +857,9 @@ const OwnerSignupPage = () => {
             <InputGroup>
               <Label>가게 전화번호</Label>
               <Input 
-                name="phone" 
+                name="store.phone" 
                 placeholder="가게 전화번호를 입력하세요" 
-                value={formData.phone} 
+                value={formData.store.phone} 
                 onChange={handleChange}
                 required
               />
@@ -547,21 +867,27 @@ const OwnerSignupPage = () => {
             <InputGroup>
               <Label>주소</Label>
               <Input 
-                name="address" 
+                name="store.address" 
                 placeholder="주소를 입력하세요" 
-                value={formData.address} 
+                value={formData.store.address} 
                 onChange={handleChange}
                 required
               />
             </InputGroup>
             <InputGroup>
               <Label>카테고리</Label>
-              <Select name="category" value={formData.category} onChange={handleChange} required>
+              <Select name="store.category" value={formData.store.category} onChange={handleChange} required>
                 <option value="">카테고리를 선택하세요</option>
                 <option value="cafe">카페</option>
-                <option value="food">식당</option>
-                <option value="beauty">미용</option>
-                <option value="etc">기타</option>
+                <option value="restaurant">음식점</option>
+                <option value="bakery">베이커리</option>
+                <option value="pub">주점</option>
+                <option value="fitness">운동</option>
+                <option value="study">독서실</option>
+                <option value="florist">꽃집</option>
+                <option value="convenience">편의점</option>
+                <option value="entertain">유흥시설</option>
+                <option value="other">기타</option>
               </Select>
             </InputGroup>
           </>
@@ -573,9 +899,9 @@ const OwnerSignupPage = () => {
             <InputGroup>
               <Label>가게 설명</Label>
               <Textarea 
-                name="description" 
+                name="store.description" 
                 placeholder="가게에 대한 설명을 입력하세요" 
-                value={formData.description} 
+                value={formData.store.description} 
                 onChange={handleChange}
                 required
               />
@@ -586,27 +912,118 @@ const OwnerSignupPage = () => {
                 <FileInput 
                   type="file" 
                   accept="image/*" 
-                  onChange={handleImageUpload}
+                  onChange={e => handleImageUpload(e, 'store_image')}
                   disabled={imageUploading}
-                  required={!formData.image_url}
                 />
                 <FileInputLabel>
                   {imageUploading ? '업로드 중...' : '이미지를 선택하세요'}
                 </FileInputLabel>
               </FileInputWrapper>
-              {formData.image_url && (
+              {formData.store.image_url && (
                 <UploadStatus>✓ 이미지 업로드 완료</UploadStatus>
               )}
             </InputGroup>
             <InputGroup>
               <Label>영업시간</Label>
-              <Input 
-                name="business_hours" 
-                placeholder="예: 09:00 - 22:00" 
-                value={formData.business_hours} 
-                onChange={handleChange}
-                required
-              />
+              <BusinessHoursGrid>
+                {Object.entries(formData.store.business_hours).map(([day, hours]) => {
+                  const dayNames = { mon: '월', tue: '화', wed: '수', thu: '목', fri: '금', sat: '토', sun: '일' };
+                  return (
+                    <DayContainer key={day}>
+                      <DayRow>
+                        <DayLabel>{dayNames[day]}</DayLabel>
+                        <TimeInputs>
+                          <CheckboxLabel>
+                            <input
+                              type="checkbox"
+                              checked={hours.closed || false}
+                              onChange={e => handleBusinessHoursChange(day, 'closed', e.target.checked)}
+                            />
+                            휴무
+                          </CheckboxLabel>
+                          {!hours.closed && (
+                            <>
+                              <TimeSelect
+                                value={hours.open || '10:00'}
+                                onChange={e => handleBusinessHoursChange(day, 'open', e.target.value)}
+                              >
+                                {generateTimeOptions().map(time => (
+                                  <option key={time} value={time}>{time}</option>
+                                ))}
+                              </TimeSelect>
+                              <span>~</span>
+                              <TimeSelect
+                                value={hours.close || '20:00'}
+                                onChange={e => handleBusinessHoursChange(day, 'close', e.target.value)}
+                              >
+                                {generateTimeOptions().map(time => (
+                                  <option key={time} value={time}>{time}</option>
+                                ))}
+                              </TimeSelect>
+                            </>
+                          )}
+                        </TimeInputs>
+                      </DayRow>
+                      {!hours.closed && (
+                        <BreakTimeInputs>
+                          <CheckboxLabel>
+                            <input
+                              type="checkbox"
+                              checked={hours.hasBreak || false}
+                              onChange={e => handleBusinessHoursChange(day, 'hasBreak', e.target.checked)}
+                            />
+                            휴게시간
+                          </CheckboxLabel>
+                          {hours.hasBreak && (
+                            <>
+                              <TimeSelect
+                                value={hours.breakStart || '14:00'}
+                                onChange={e => handleBusinessHoursChange(day, 'breakStart', e.target.value)}
+                              >
+                                {generateTimeOptions().map(time => (
+                                  <option key={time} value={time}>{time}</option>
+                                ))}
+                              </TimeSelect>
+                              <span>~</span>
+                              <TimeSelect
+                                value={hours.breakEnd || '16:00'}
+                                onChange={e => handleBusinessHoursChange(day, 'breakEnd', e.target.value)}
+                              >
+                                {generateTimeOptions().map(time => (
+                                  <option key={time} value={time}>{time}</option>
+                                ))}
+                              </TimeSelect>
+                            </>
+                          )}
+                        </BreakTimeInputs>
+                      )}
+                    </DayContainer>
+                  );
+                })}
+              </BusinessHoursGrid>
+            </InputGroup>
+          </>
+        );
+      case 4:
+        return (
+          <>
+            <StepTitle>사업자등록증</StepTitle>
+            <InputGroup>
+              <Label>사업자등록증 이미지</Label>
+              <FileInputWrapper>
+                <FileInput 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={e => handleImageUpload(e, 'business_license')}
+                  disabled={licenseUploading}
+                />
+                <FileInputLabel>
+                  {licenseUploading ? '업로드 중...' : '사업자등록증을 선택하세요'}
+                </FileInputLabel>
+              </FileInputWrapper>
+              {formData.business_license_image && (
+                <UploadStatus>✓ 사업자등록증 업로드 완료</UploadStatus>
+              )}
             </InputGroup>
           </>
         );
@@ -630,6 +1047,7 @@ const OwnerSignupPage = () => {
           <ProgressStep active={currentStep >= 1} />
           <ProgressStep active={currentStep >= 2} />
           <ProgressStep active={currentStep >= 3} />
+          <ProgressStep active={currentStep >= 4} />
         </ProgressBar>
 
         <FormContainer>
@@ -649,7 +1067,7 @@ const OwnerSignupPage = () => {
                   이전
                 </SecondaryButton>
               )}
-              {currentStep < 3 ? (
+              {currentStep < 4 ? (
                 <PrimaryButton type="button" onClick={nextStep}>
                   다음
                 </PrimaryButton>
@@ -657,7 +1075,7 @@ const OwnerSignupPage = () => {
                 <PrimaryButton 
                   type="button" 
                   onClick={handleSubmit}
-                  disabled={isLoading || imageUploading || !validateStep(3)}
+                  disabled={isLoading || licenseUploading || !validateStep(4)}
                 >
                   {isLoading ? (
                     <>

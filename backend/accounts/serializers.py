@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.db import transaction
-from .models import OwnerUser, OwnerRefreshToken, ConsumerRefreshToken
+from .models import OwnerUser, OwnerRefreshToken, ConsumerRefreshToken, ConsumerUser, PhoneVerification
 from stores.serializers import StoreSignupSerializer
 from rest_framework.validators import UniqueValidator
 from django.contrib.auth import authenticate
@@ -179,10 +179,6 @@ class LogoutSerializer(serializers.Serializer):
     refresh = serializers.CharField()
 
     def validate(self, attrs):
-        from jwt import decode as jwt_decode
-        from django.conf import settings
-        from django.utils import timezone
-
         refresh_token = attrs.get("refresh")
 
         try:
@@ -307,3 +303,82 @@ class OwnerProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = OwnerUser
         fields = ("name", "phone_number", "is_verified")
+
+
+
+class ConsumerLoginSerializer(serializers.Serializer):
+    phone_number = serializers.CharField()
+    code = serializers.CharField(write_only=True)
+    device_info = serializers.CharField(required=True)
+
+    def validate(self, attrs):
+        phone_number = attrs.get("phone_number")
+        code = attrs.get("code")
+        device_info = attrs.get("device_info")
+
+        # 1. 인증 내역 확인 (최근 2분 이내, 미사용, 코드 일치)
+        cutoff = timezone.now() - timedelta(minutes=2)
+        verification = (
+            PhoneVerification.objects.filter(
+                phone_number=phone_number,
+                code=code,
+                is_verified=True,
+                verified_at__gte=cutoff,
+            )
+            .order_by("-verified_at")
+            .first()
+        )
+
+        if not verification:
+            raise serializers.ValidationError("유효하지 않거나 만료된 인증번호입니다.")
+
+        # 2. 유저 생성 or 조회
+        user, created = ConsumerUser.objects.get_or_create(
+            phone_number=phone_number,
+            defaults={"kakao_id": f"phone_{phone_number}"},
+        )
+
+        if not user.is_active:
+            raise serializers.ValidationError("비활성화된 계정입니다.")
+
+        # 3. JWT 토큰 발급 (for_user 사용)
+        refresh = RefreshToken.for_user(user)
+        refresh["role"] = "consumer"
+        refresh["phone_number"] = user.phone_number
+
+        access = refresh.access_token
+        access["role"] = "consumer"
+        access["phone_number"] = user.phone_number
+
+        # 4. DB에 refresh 저장
+        ConsumerRefreshToken.objects.create(
+            user=user,
+            token=str(refresh),
+            device_info=device_info,
+            expires_at=timezone.now() + timedelta(days=30),
+        )
+
+        # 5. 마지막 로그인 갱신
+        user.last_login = timezone.now()
+        user.save(update_fields=["last_login"])
+
+        return {
+            "access": str(access),
+            "refresh": str(refresh),
+        }
+    
+
+class ConsumerProfileSerializer(serializers.ModelSerializer):
+    phone = serializers.CharField(source="phone_number")
+
+    class Meta:
+        model = ConsumerUser
+        fields = ["id", "kakao_id", "phone", "created_at"]
+
+
+class OwnerProfileSerializer(serializers.ModelSerializer):
+    phone = serializers.CharField(source="phone_number")
+
+    class Meta:
+        model = OwnerUser
+        fields = ["id", "username", "name", "phone", "created_at", "is_verified"]

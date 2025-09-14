@@ -14,4 +14,6 @@ urlpatterns = [
     path("verify-owner/", OwnerVerifyView.as_view(), name="verify-owner"),
     path("owner-license/", OwnerLicenseImageUpdateView.as_view()),
     path("owner-profile/", OwnerProfileView.as_view()),
+    path("consumer-login/", ConsumerLoginView.as_view(), name="consumer-login"),
+    path("me/", MeView.as_view(), name="me"),
 ]

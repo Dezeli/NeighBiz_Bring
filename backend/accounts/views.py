@@ -279,3 +279,45 @@ class OwnerProfileView(APIView):
             "store": StoreProfileSerializer(store).data,
         }
         return Response(success(data=data, message="사장님 정보 조회 성공"))
+
+
+class ConsumerLoginView(APIView):
+    def post(self, request):
+        serializer = ConsumerLoginSerializer(data=request.data)
+        if serializer.is_valid():
+            return Response(
+                success(data=serializer.validated_data, message="소비자 로그인 성공"),
+                status=status.HTTP_200_OK,
+            )
+        return Response(
+            failure(data=serializer.errors),
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+
+
+class MeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+
+        if isinstance(user, OwnerUser):
+            serializer = OwnerProfileSerializer(user)
+            role = "owner"
+        elif isinstance(user, ConsumerUser):
+            serializer = ConsumerProfileSerializer(user)
+            role = "consumer"
+        else:
+            return Response(
+                failure(message="알 수 없는 사용자 유형입니다."),
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        return Response(
+            success(
+                data={"role": role, "profile": serializer.data},
+                message="내 정보 조회 성공"
+            ),
+            status=status.HTTP_200_OK
+        )

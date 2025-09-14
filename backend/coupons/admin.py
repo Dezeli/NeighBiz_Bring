@@ -16,10 +16,10 @@ class CouponPolicyAdmin(admin.ModelAdmin):
 class CouponAdmin(admin.ModelAdmin):
     list_display = (
         "id", "short_code", "user", "store_name", "status",
-        "slug", "issued_at", "used_at", "expired_at"
+         "issued_at", "used_at", "expired_at"
     )
     list_filter = ("status", "issued_at", "used_at", "expired_at")
-    search_fields = ("short_code", "slug", "user__phone_number", "policy__store__name")
+    search_fields = ("short_code", "user__phone_number", "policy__store__name")
     ordering = ("-issued_at",)
 
     def store_name(self, obj):

@@ -11,13 +11,8 @@ from django.utils import timezone
 from datetime import timedelta
 from django.db import transaction
 
-from django.db.models import Q
 from django.conf import settings
 from stores.models import Store
-import boto3
-import qrcode
-import io
-from botocore.exceptions import ClientError
 
 
 class ProposalCreateSerializer(serializers.ModelSerializer):
@@ -165,49 +160,8 @@ class ProposalActionSerializer(serializers.Serializer):
                 return "제휴를 승인했습니다."
 
 
+
 class QRCodeSerializer(serializers.Serializer):
-    def to_representation(self, instance):
-        qr_url = self.get_qr_url()
-        return {"qr_url": qr_url}
-
-
-    def get_qr_url(self):
-        user = self.context["user"]
-        store = Store.objects.get(owner=user)
-
-        partnership = Partnership.objects.filter(
-            Q(store_a=store) | Q(store_b=store),
-            status="active"
-        ).first()
-        if not partnership:
-            raise serializers.ValidationError({"partnership": "제휴 없음"})
-
-        slug = partnership.slug_for_a if partnership.store_a == store else partnership.slug_for_b
-        s3_key = f"qr_codes/{store.id}_{slug}.png"
-        bucket = settings.AWS_S3_BUCKET
-        s3 = boto3.client("s3")
-
-        # 이미지 없으면 생성
-        try:
-            s3.head_object(Bucket=bucket, Key=s3_key)
-        except ClientError as e:
-            if e.response["Error"]["Code"] == "404":
-                buffer = io.BytesIO()
-                img = qrcode.make(f"{settings.APP_BASE_URL}/issue/{slug}")
-                img.save(buffer, format="PNG")
-                buffer.seek(0)
-                s3.upload_fileobj(
-                    buffer, bucket, s3_key, ExtraArgs={"ContentType": "image/png"}
-                )
-            else:
-                raise serializers.ValidationError({"s3": str(e)})
-
-        # presigned URL 생성
-        try:
-            return s3.generate_presigned_url(
-                "get_object",
-                Params={"Bucket": bucket, "Key": s3_key},
-                ExpiresIn=settings.AWS_S3_PRESIGNED_EXPIRES
-            )
-        except Exception as e:
-            raise serializers.ValidationError({"presigned_url": str(e)})
+    partnership_id = serializers.IntegerField()
+    slug = serializers.CharField()
+    qr_code_url = serializers.URLField()

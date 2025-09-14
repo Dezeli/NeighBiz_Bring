@@ -70,6 +70,113 @@ const PageDescription = styled.p`
   margin-bottom: 1.5rem;
 `;
 
+const FilterSection = styled.div`
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(226, 232, 240, 0.6);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+`;
+
+const FilterTitle = styled.h3`
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 1rem;
+`;
+
+const FilterGrid = styled.div`
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 1rem;
+`;
+
+const FilterRow = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+`;
+
+const FilterGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+`;
+
+const FilterLabel = styled.label`
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+`;
+
+const FilterInput = styled.input`
+  width: 100%;
+  height: 40px;
+  padding: 0 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  
+  &:focus {
+    outline: none;
+    border-color: #10b981;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1);
+  }
+`;
+
+const FilterSelect = styled.select`
+  width: 100%;
+  height: 40px;
+  padding: 0 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  background: white;
+  
+  &:focus {
+    outline: none;
+    border-color: #10b981;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1);
+  }
+`;
+
+const FilterActions = styled.div`
+  display: flex;
+  gap: 0.5rem;
+`;
+
+const FilterButton = styled.button`
+  flex: 1;
+  height: 40px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+`;
+
+const ApplyButton = styled(FilterButton)`
+  background: linear-gradient(135deg, #10b981 0%, #0ea5e9 100%);
+  color: white;
+  
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  }
+`;
+
+const ResetButton = styled(FilterButton)`
+  background: #f9fafb;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+  
+  &:hover {
+    background: #f3f4f6;
+  }
+`;
+
 const NavigationTabs = styled.div`
   display: flex;
   gap: 0.75rem;
@@ -341,22 +448,6 @@ const Footer = styled.div`
   font-size: 0.75rem;
 `;
 
-/** ---------- 상태/표시 유틸 ---------- */
-const getStatusMeta = (status) => {
-  switch (status) {
-    case 'open':
-      return { label: '모집중', bg: 'rgba(16,185,129,0.10)', color: '#065f46', dot: '#10b981' };
-    case 'matched':
-      return { label: '제휴완료', bg: 'rgba(59,130,246,0.10)', color: '#1e3a8a', dot: '#3b82f6' };
-    case 'closed':
-      return { label: '마감', bg: 'rgba(107,114,128,0.12)', color: '#374151', dot: '#6b7280' };
-    default:
-      return { label: '모집중', bg: 'rgba(16,185,129,0.10)', color: '#065f46', dot: '#10b981' };
-  }
-};
-
-const isPostClickable = (status) => status === 'open';
-
 const PostsListPage = () => {
   const navigate = useNavigate();
   const { apiCall } = useAuth();
@@ -364,36 +455,102 @@ const PostsListPage = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const [filters, setFilters] = useState({
+    category: '',
+    description: '',
+    expected_value_min: '',
+    expected_value_max: '',
+    duration: '',
+    monthly_limit_min: '',
+    monthly_limit_max: '',
+    updated_at_after: '',
+    updated_at_before: '',
+    is_partnered: ''
+  });
+
+  const buildQueryParams = () => {
+    const params = new URLSearchParams();
+    params.append('page', currentPage.toString());
+    
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value && value.toString().trim()) {
+        params.append(key, value.toString().trim());
+      }
+    });
+    
+    return params.toString();
+  };
+
+  const fetchPosts = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const queryString = buildQueryParams();
+      const response = await apiCall({
+        method: 'GET',
+        url: `/stores/posts/?${queryString}`,
+      });
+
+      // API 응답 구조: { success: true, data: { results: [...] } }
+      let postsData = [];
+      if (response && response.data && response.data.results && Array.isArray(response.data.results)) {
+        postsData = response.data.results;
+      } else if (Array.isArray(response)) {
+        postsData = response;
+      } else {
+        console.error('Unexpected API response structure:', response);
+        postsData = [];
+      }
+
+      setPosts(postsData);
+    } catch (err) {
+      console.error('API Error:', err);
+      setError('게시글을 불러오는데 실패했습니다.');
+      setPosts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        const response = await apiCall({
-          method: 'GET',
-          url: '/posts/',
-        });
-
-        // 공통 응답 포맷 대응: { success, data, ... } 또는 배열 직접
-        const data = Array.isArray(response)
-          ? response
-          : (response?.data ?? []);
-        setPosts(data);
-      } catch (err) {
-        setError('게시글을 불러오는데 실패했습니다.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchPosts();
-  }, [apiCall]);
+  }, [currentPage]);
+
+  const handleFilterChange = (key, value) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  const applyFilters = () => {
+    setCurrentPage(1);
+    fetchPosts();
+  };
+
+  const resetFilters = () => {
+    setFilters({
+      category: '',
+      description: '',
+      expected_value_min: '',
+      expected_value_max: '',
+      duration: '',
+      monthly_limit_min: '',
+      monthly_limit_max: '',
+      updated_at_after: '',
+      updated_at_before: '',
+      is_partnered: ''
+    });
+    setCurrentPage(1);
+    fetchPosts();
+  };
 
   const formatDuration = (duration) => {
     const durationMap = {
       '1_month': '1개월',
+      '2_months': '2개월',
       '3_months': '3개월',
       '6_months': '6개월',
-      'unlimited': '무기한',
+      '1_year': '1년',
     };
     return durationMap[duration] || duration;
   };
@@ -421,8 +578,14 @@ const PostsListPage = () => {
     const categoryIcons = {
       cafe: '☕',
       restaurant: '🍽️',
-      beauty: '💄',
-      etc: '🛍️',
+      bakery: '🥐',
+      pub: '🍺',
+      fitness: '💪',
+      study: '📚',
+      florist: '🌸',
+      convenience: '🏪',
+      entertain: '🎵',
+      other: '🛍️'
     };
     return categoryIcons[category] || '🏪';
   };
@@ -430,14 +593,30 @@ const PostsListPage = () => {
   const getCategoryName = (category) => {
     const categoryNames = {
       cafe: '카페',
-      restaurant: '식당',
-      beauty: '미용',
-      etc: '기타',
+      restaurant: '음식점',
+      bakery: '베이커리',
+      pub: '주점',
+      fitness: '운동',
+      study: '독서실',
+      florist: '꽃집',
+      convenience: '편의점',
+      entertain: '유흥시설',
+      other: '기타'
     };
     return categoryNames[category] || category;
   };
 
-  if (loading) {
+  const getStatusMeta = (isPartnered) => {
+    if (isPartnered) {
+      return { label: '제휴완료', bg: 'rgba(59,130,246,0.10)', color: '#1e3a8a', dot: '#3b82f6' };
+    } else {
+      return { label: '모집중', bg: 'rgba(16,185,129,0.10)', color: '#065f46', dot: '#10b981' };
+    }
+  };
+
+  const isPostClickable = (isPartnered) => !isPartnered; // 제휴완료면 클릭 불가
+
+  if (loading && posts.length === 0) {
     return (
       <Container>
         <ContentWrapper>
@@ -457,7 +636,7 @@ const PostsListPage = () => {
           <ErrorContainer>
             <ErrorIcon>❌</ErrorIcon>
             <ErrorText>{error}</ErrorText>
-            <RetryButton onClick={() => window.location.reload()}>
+            <RetryButton onClick={fetchPosts}>
               다시 시도
             </RetryButton>
           </ErrorContainer>
@@ -478,6 +657,131 @@ const PostsListPage = () => {
           <PageDescription>다른 사장님들의 제휴 제안을 확인해보세요</PageDescription>
         </LogoSection>
 
+        <FilterSection>
+          <FilterTitle>🔍 필터 검색</FilterTitle>
+          <FilterGrid>
+            <FilterRow>
+              <FilterGroup>
+                <FilterLabel>카테고리</FilterLabel>
+                <FilterSelect
+                  value={filters.category}
+                  onChange={e => handleFilterChange('category', e.target.value)}
+                >
+                  <option value="">전체</option>
+                  <option value="cafe">카페</option>
+                  <option value="restaurant">음식점</option>
+                  <option value="bakery">베이커리</option>
+                  <option value="pub">주점</option>
+                  <option value="fitness">운동</option>
+                  <option value="study">독서실</option>
+                  <option value="florist">꽃집</option>
+                  <option value="convenience">편의점</option>
+                  <option value="entertain">유흥시설</option>
+                  <option value="other">기타</option>
+                </FilterSelect>
+              </FilterGroup>
+              <FilterGroup>
+                <FilterLabel>쿠폰 설명 검색</FilterLabel>
+                <FilterInput
+                  type="text"
+                  placeholder="예: 아메리카노"
+                  value={filters.description}
+                  onChange={e => handleFilterChange('description', e.target.value)}
+                />
+              </FilterGroup>
+            </FilterRow>
+            <FilterRow>
+              <FilterGroup>
+                <FilterLabel>최소 가격</FilterLabel>
+                <FilterInput
+                  type="number"
+                  placeholder="1000"
+                  value={filters.expected_value_min}
+                  onChange={e => handleFilterChange('expected_value_min', e.target.value)}
+                />
+              </FilterGroup>
+              <FilterGroup>
+                <FilterLabel>최대 가격</FilterLabel>
+                <FilterInput
+                  type="number"
+                  placeholder="5000"
+                  value={filters.expected_value_max}
+                  onChange={e => handleFilterChange('expected_value_max', e.target.value)}
+                />
+              </FilterGroup>
+            </FilterRow>
+            <FilterRow>
+              <FilterGroup>
+                <FilterLabel>유효기간</FilterLabel>
+                <FilterSelect
+                  value={filters.duration}
+                  onChange={e => handleFilterChange('duration', e.target.value)}
+                >
+                  <option value="">전체</option>
+                  <option value="1_month">1개월</option>
+                  <option value="2_months">2개월</option>
+                  <option value="3_months">3개월</option>
+                  <option value="6_months">6개월</option>
+                  <option value="1_year">1년</option>
+                </FilterSelect>
+              </FilterGroup>
+              <FilterGroup>
+                <FilterLabel>제휴 여부</FilterLabel>
+                <FilterSelect
+                  value={filters.is_partnered}
+                  onChange={e => handleFilterChange('is_partnered', e.target.value)}
+                >
+                  <option value="">전체</option>
+                  <option value="true">제휴완료</option>
+                  <option value="false">모집중</option>
+                </FilterSelect>
+              </FilterGroup>
+            </FilterRow>
+            <FilterRow>
+              <FilterGroup>
+                <FilterLabel>최소 월한도</FilterLabel>
+                <FilterInput
+                  type="number"
+                  placeholder="10"
+                  value={filters.monthly_limit_min}
+                  onChange={e => handleFilterChange('monthly_limit_min', e.target.value)}
+                />
+              </FilterGroup>
+              <FilterGroup>
+                <FilterLabel>최대 월한도</FilterLabel>
+                <FilterInput
+                  type="number"
+                  placeholder="100"
+                  value={filters.monthly_limit_max}
+                  onChange={e => handleFilterChange('monthly_limit_max', e.target.value)}
+                />
+              </FilterGroup>
+            </FilterRow>
+            <FilterRow>
+              <FilterGroup>
+                <FilterLabel>시작 날짜</FilterLabel>
+                <FilterInput
+                  type="date"
+                  value={filters.updated_at_after}
+                  onChange={e => handleFilterChange('updated_at_after', e.target.value)}
+                />
+              </FilterGroup>
+              <FilterGroup>
+                <FilterLabel>종료 날짜</FilterLabel>
+                <FilterInput
+                  type="date"
+                  value={filters.updated_at_before}
+                  onChange={e => handleFilterChange('updated_at_before', e.target.value)}
+                />
+              </FilterGroup>
+            </FilterRow>
+          </FilterGrid>
+          <FilterActions>
+            <ResetButton onClick={resetFilters}>초기화</ResetButton>
+            <ApplyButton onClick={applyFilters}>검색</ApplyButton>
+          </FilterActions>
+        </FilterSection>
+
         <NavigationTabs>
           <TabButton onClick={() => navigate('/owner/mypage')}>
             <span>👤</span>
@@ -493,17 +797,16 @@ const PostsListPage = () => {
           {posts.length === 0 ? (
             <EmptyState>
               <EmptyIcon>📝</EmptyIcon>
-              <EmptyTitle>등록된 게시글이 없습니다</EmptyTitle>
+              <EmptyTitle>조건에 맞는 게시글이 없습니다</EmptyTitle>
               <EmptyDescription>
-                아직 제휴 제안이 없어요.<br />
-                조금 더 기다려보세요!
+                필터 조건을 변경해서 다시 검색해보세요
               </EmptyDescription>
             </EmptyState>
           ) : (
             posts.map((post) => {
-              const meta = getStatusMeta(post.status);
-              const disabled = !isPostClickable(post.status);
-              const category = post?.author?.category; // 백엔드 스펙에 맞춰 필요시 수정
+              const meta = getStatusMeta(post.is_partnered);
+              const disabled = !isPostClickable(post.is_partnered);
+              const category = post?.category;
 
               return (
                 <PostCard
@@ -517,9 +820,9 @@ const PostsListPage = () => {
                         {getCategoryIcon(category)}
                       </AuthorAvatar>
                       <AuthorDetails>
-                        <PostTitle>{post.title}</PostTitle>
+                        <PostTitle>{post.store_name}</PostTitle>
                         <PostMeta>
-                          {getCategoryName(category)} • {formatDate(post.created_at)}
+                          {getCategoryName(category)} • {post.owner_name} • {formatDate(post.updated_at)}
                         </PostMeta>
                       </AuthorDetails>
                     </AuthorInfo>
@@ -542,12 +845,25 @@ const PostsListPage = () => {
                       </InfoValue>
                     </InfoBox>
                     <InfoBox $variant="duration">
-                      <InfoLabel $variant="duration">유효 기간</InfoLabel>
+                      <InfoLabel $variant="duration">월 한도</InfoLabel>
                       <InfoValue $variant="duration">
-                        {formatDuration(post.expected_duration)}
+                        {post.monthly_limit}매
                       </InfoValue>
                     </InfoBox>
                   </CouponInfo>
+                  
+                  {post.expected_duration && (
+                    <div style={{ 
+                      background: 'rgba(147, 51, 234, 0.1)', 
+                      borderRadius: '12px', 
+                      padding: '0.75rem', 
+                      marginBottom: '0.5rem' 
+                    }}>
+                      <InfoLabel style={{ color: '#7c2d12', margin: '0 0 0.25rem 0' }}>
+                        유효 기간: {formatDuration(post.expected_duration)}
+                      </InfoLabel>
+                    </div>
+                  )}
                 </PostCard>
               );
             })
