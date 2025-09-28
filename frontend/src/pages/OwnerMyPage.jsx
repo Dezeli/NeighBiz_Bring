@@ -61,7 +61,11 @@ const Logo = styled.h1`
 const NavigationTabs = styled.div`
   display: flex;
   gap: 0.75rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
+  padding: 0.5rem;
+  background: rgba(248, 250, 252, 0.8);
+  border-radius: 16px;
+  border: 1px solid rgba(226, 232, 240, 0.6);
 `;
 
 const TabButton = styled.button`
@@ -84,12 +88,12 @@ const TabButton = styled.button`
     box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
     cursor: default;
   ` : `
-    background: rgba(255, 255, 255, 0.9);
+    background: white;
     color: #374151;
-    border: 1px solid #e5e7eb;
+    border: 1px solid rgba(226, 232, 240, 0.8);
     
     &:hover {
-      background: white;
+      background: #f9fafb;
       border-color: #d1d5db;
       transform: translateY(-1px);
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -97,42 +101,47 @@ const TabButton = styled.button`
   `}
 `;
 
-const Card = styled.div`
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(226, 232, 240, 0.6);
-  border-radius: 16px;
+const ProfileSection = styled.div`
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border: 2px solid rgba(59, 130, 246, 0.1);
+  border-radius: 20px;
   padding: 1.5rem;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.08);
 `;
 
-const ProfileSection = styled.div`
-  text-align: center;
-  margin-bottom: 1.5rem;
+const SectionTitle = styled.h3`
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #1e40af;
+  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 `;
 
 const ProfileIcon = styled.div`
   width: 60px;
   height: 60px;
-  background: linear-gradient(135deg, #10b981 0%, #0ea5e9 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0 auto 1rem;
-  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
 `;
 
 const ProfileTitle = styled.h2`
   font-size: 1.5rem;
   font-weight: 700;
-  color: #374151;
-  margin-bottom: 0.5rem;
+  color: #1e3a8a;
+  margin-bottom: 1rem;
 `;
 
 const UserInfoBox = styled.div`
-  background: rgba(248, 250, 252, 0.8);
+  background: white;
+  border: 2px solid rgba(59, 130, 246, 0.15);
   border-radius: 12px;
   padding: 1rem;
   text-align: left;
@@ -150,43 +159,56 @@ const InfoRow = styled.div`
 `;
 
 const InfoLabel = styled.span`
-  color: #6b7280;
+  color: #4338ca;
   font-size: 0.875rem;
   flex: 1;
+  font-weight: 600;
 `;
 
 const InfoValue = styled.span`
-  color: #374151;
+  color: #1e3a8a;
   font-size: 0.875rem;
   font-weight: 600;
+`;
+
+const StatusSection = styled.div`
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border: 2px solid rgba(16, 185, 129, 0.1);
+  border-radius: 20px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.08);
 `;
 
 const StatusBadge = styled.div`
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  font-size: 0.875rem;
-  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: 25px;
+  font-size: 1rem;
+  font-weight: 700;
   margin-bottom: 1rem;
   
   ${props => {
     switch (props.status) {
       case 'active':
         return `
-          background: rgba(16, 185, 129, 0.1);
-          color: #065f46;
+          background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+          color: white;
+          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
         `;
       case 'pending':
         return `
-          background: rgba(251, 191, 36, 0.1);
-          color: #92400e;
+          background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+          color: white;
+          box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
         `;
       default:
         return `
-          background: rgba(107, 114, 128, 0.1);
-          color: #374151;
+          background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+          color: white;
+          box-shadow: 0 4px 12px rgba(107, 114, 128, 0.3);
         `;
     }
   }}
@@ -196,58 +218,56 @@ const StatusDot = styled.div`
   width: 8px;
   height: 8px;
   border-radius: 50%;
+  background: white;
   
-  ${props => {
-    switch (props.status) {
-      case 'active':
-        return 'background: #10b981;';
-      case 'pending':
-        return 'background: #fbbf24; animation: pulse 2s infinite;';
-      default:
-        return 'background: #6b7280;';
+  ${props => props.status === 'pending' && `
+    animation: pulse 2s infinite;
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
     }
-  }}
-  
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-  }
+  `}
 `;
 
 const StoreName = styled.h3`
   font-size: 1.25rem;
   font-weight: 700;
-  color: #374151;
+  color: #065f46;
   margin-bottom: 0.5rem;
 `;
 
 const StatusText = styled.p`
-  color: #6b7280;
+  color: #047857;
   font-size: 0.875rem;
   line-height: 1.5;
   margin-bottom: 1rem;
+  font-weight: 600;
 `;
 
 const QRSection = styled.div`
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  background: white;
+  border: 2px solid rgba(16, 185, 129, 0.15);
   border-radius: 16px;
   padding: 1.5rem;
   text-align: center;
 `;
 
 const QRLabel = styled.p`
-  color: #64748b;
+  color: #065f46;
   font-size: 0.875rem;
   margin-bottom: 1rem;
+  font-weight: 600;
 `;
 
 const QRImageWrapper = styled.div`
-  background: white;
+  background: #f8fafc;
   padding: 1rem;
   border-radius: 12px;
   display: inline-block;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   margin-bottom: 1rem;
+  border: 1px solid rgba(16, 185, 129, 0.2);
 `;
 
 const QRImage = styled.img`
@@ -257,9 +277,124 @@ const QRImage = styled.img`
 `;
 
 const QRDescription = styled.p`
-  color: #6b7280;
+  color: #059669;
   font-size: 0.75rem;
   line-height: 1.4;
+  font-weight: 500;
+`;
+
+const ProposalsSection = styled.div`
+  background: linear-gradient(135deg, #fef7ff 0%, #f3e8ff 100%);
+  border: 2px solid rgba(147, 51, 234, 0.1);
+  border-radius: 20px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 12px rgba(147, 51, 234, 0.08);
+`;
+
+const ProposalTabs = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+`;
+
+const ProposalTab = styled.button`
+  flex: 1;
+  height: 40px;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  ${props => props.active ? `
+    background: linear-gradient(135deg, #9333ea 0%, #7c3aed 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(147, 51, 234, 0.3);
+  ` : `
+    background: white;
+    color: #7c2d12;
+    border: 1px solid rgba(147, 51, 234, 0.2);
+    
+    &:hover {
+      background: #faf5ff;
+      border-color: #9333ea;
+    }
+  `}
+`;
+
+const ProposalsList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+`;
+
+const ProposalItem = styled.div`
+  background: white;
+  border: 2px solid rgba(147, 51, 234, 0.15);
+  border-radius: 12px;
+  padding: 1rem;
+  text-align: left;
+`;
+
+const ProposalHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+`;
+
+const ProposalStore = styled.h4`
+  font-size: 1rem;
+  font-weight: 700;
+  color: #581c87;
+`;
+
+const ProposalStatus = styled.span`
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  
+  ${props => {
+    switch (props.status) {
+      case 'pending':
+        return `
+          background: rgba(245, 158, 11, 0.15);
+          color: #92400e;
+        `;
+      case 'accepted':
+        return `
+          background: rgba(16, 185, 129, 0.15);
+          color: #065f46;
+        `;
+      case 'rejected':
+        return `
+          background: rgba(239, 68, 68, 0.15);
+          color: #991b1b;
+        `;
+      default:
+        return `
+          background: rgba(107, 114, 128, 0.15);
+          color: #374151;
+        `;
+    }
+  }}
+`;
+
+const ProposalDate = styled.p`
+  font-size: 0.75rem;
+  color: #7c2d12;
+  font-weight: 500;
+`;
+
+const EmptyProposals = styled.div`
+  text-align: center;
+  padding: 2rem 1rem;
+  background: white;
+  border: 2px dashed rgba(147, 51, 234, 0.2);
+  border-radius: 12px;
 `;
 
 const EmptyStateIcon = styled.div`
@@ -324,7 +459,8 @@ const ActionButton = styled.button`
 `;
 
 const CouponPolicyBox = styled.div`
-  background: rgba(248, 250, 252, 0.8);
+  background: white;
+  border: 2px solid rgba(16, 185, 129, 0.15);
   border-radius: 12px;
   padding: 1rem;
   margin-bottom: 1rem;
@@ -332,20 +468,30 @@ const CouponPolicyBox = styled.div`
 `;
 
 const PolicyLabel = styled.p`
-  color: #374151;
+  color: #065f46;
   font-size: 0.875rem;
   font-weight: 600;
   margin-bottom: 0.5rem;
 `;
 
 const PolicyValue = styled.p`
-  color: #6b7280;
+  color: #047857;
   font-size: 0.875rem;
   margin-bottom: 0.75rem;
+  font-weight: 500;
   
   &:last-child {
     margin-bottom: 0;
   }
+`;
+
+const ButtonSection = styled.div`
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border: 2px solid rgba(245, 158, 11, 0.1);
+  border-radius: 20px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.08);
 `;
 
 const StatsButton = styled.button`
@@ -379,9 +525,9 @@ const StatsButton = styled.button`
 const EditPolicyButton = styled.button`
   width: 100%;
   height: 48px;
-  background: rgba(255, 255, 255, 0.9);
-  color: #374151;
-  border: 1px solid #e5e7eb;
+  background: white;
+  color: #d97706;
+  border: 2px solid rgba(245, 158, 11, 0.3);
   border-radius: 12px;
   font-size: 0.875rem;
   font-weight: 600;
@@ -394,10 +540,10 @@ const EditPolicyButton = styled.button`
   margin-bottom: 1rem;
 
   &:hover {
-    background: white;
-    border-color: #d1d5db;
+    background: #fffbeb;
+    border-color: #f59e0b;
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
   }
 `;
 
@@ -453,7 +599,7 @@ const LoadingText = styled.p`
 const Footer = styled.div`
   text-align: center;
   margin-top: auto;
-  padding-top: 2rem;
+  padding-top: 1rem;
   color: #9ca3af;
   font-size: 0.75rem;
 `;
@@ -464,6 +610,8 @@ const OwnerMyPage = () => {
   const [ownerProfile, setOwnerProfile] = useState(null);
   const [couponPolicy, setCouponPolicy] = useState(null);
   const [qrData, setQrData] = useState(null);
+  const [proposals, setProposals] = useState({ sent: [], received: [] });
+  const [activeProposalTab, setActiveProposalTab] = useState('sent');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -513,6 +661,24 @@ const OwnerMyPage = () => {
           console.log('No QR data found');
         }
 
+        // 4. 제휴 제안 목록 가져오기
+        try {
+          const proposalsResponse = await apiCall({
+            method: 'GET',
+            url: '/partnerships/proposals/',
+          });
+
+          if (proposalsResponse?.data) {
+            setProposals({
+              sent: proposalsResponse.data.sent || [],
+              received: proposalsResponse.data.received || []
+            });
+          }
+        } catch (err) {
+          // 제안이 없을 수 있으므로 에러 무시
+          console.log('No proposals found');
+        }
+
       } catch (err) {
         console.error('Failed to fetch data:', err);
         setError('데이터를 불러오는데 실패했습니다.');
@@ -548,6 +714,25 @@ const OwnerMyPage = () => {
       'unlimited': '무기한',
     };
     return durationMap[duration] || duration;
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ko-KR', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const getStatusText = (status) => {
+    const statusMap = {
+      'pending': '대기중',
+      'accepted': '수락됨',
+      'rejected': '거절됨',
+    };
+    return statusMap[status] || status;
   };
 
   const getCategoryIcon = (category) => {
@@ -665,6 +850,50 @@ const OwnerMyPage = () => {
     );
   };
 
+  const renderProposals = () => {
+    const currentProposals = proposals[activeProposalTab] || [];
+    
+    if (currentProposals.length === 0) {
+      return (
+        <EmptyProposals>
+          <EmptyStateIcon>📝</EmptyStateIcon>
+          <EmptyStateTitle>
+            {activeProposalTab === 'sent' ? '보낸 제안이 없습니다' : '받은 제안이 없습니다'}
+          </EmptyStateTitle>
+          <EmptyStateDescription>
+            {activeProposalTab === 'sent' 
+              ? '제휴 게시글에서 다른 사장님들에게 제휴를 제안해보세요'
+              : '아직 받은 제휴 제안이 없습니다'
+            }
+          </EmptyStateDescription>
+        </EmptyProposals>
+      );
+    }
+
+    return (
+      <ProposalsList>
+        {currentProposals.map((proposal) => (
+          <ProposalItem key={proposal.id}>
+            <ProposalHeader>
+              <ProposalStore>
+                {activeProposalTab === 'sent' 
+                  ? (proposal.recipient_store || '-')
+                  : (proposal.proposer_store || '-')
+                }
+              </ProposalStore>
+              <ProposalStatus status={proposal.status}>
+                {getStatusText(proposal.status)}
+              </ProposalStatus>
+            </ProposalHeader>
+            <ProposalDate>
+              {formatDate(proposal.created_at)}
+            </ProposalDate>
+          </ProposalItem>
+        ))}
+      </ProposalsList>
+    );
+  };
+
   if (!user) {
     return (
       <Container>
@@ -725,13 +954,12 @@ const OwnerMyPage = () => {
           </TabButton>
         </NavigationTabs>
 
-        <Card>
-          <ProfileSection>
-            <ProfileIcon>
-              <span style={{ fontSize: '1.5rem', color: 'white' }}>👤</span>
-            </ProfileIcon>
-            <ProfileTitle>{ownerProfile?.owner?.name || '사장님'}</ProfileTitle>
-          </ProfileSection>
+        <ProfileSection>
+          <SectionTitle>👤 내 정보</SectionTitle>
+          <ProfileIcon>
+            <span style={{ fontSize: '1.5rem', color: 'white' }}>👤</span>
+          </ProfileIcon>
+          <ProfileTitle>{ownerProfile?.owner?.name || '사장님'}</ProfileTitle>
 
           <UserInfoBox>
             <InfoRow>
@@ -751,30 +979,53 @@ const OwnerMyPage = () => {
               <InfoValue>{getCategoryName(ownerProfile?.store?.category) || '-'}</InfoValue>
             </InfoRow>
           </UserInfoBox>
-        </Card>
+        </ProfileSection>
 
-        <Card>
+        <StatusSection>
+          <SectionTitle>🤝 제휴 상태</SectionTitle>
           {renderContent()}
-        </Card>
+        </StatusSection>
+
+        <ProposalsSection>
+          <SectionTitle>📋 제휴 제안 목록</SectionTitle>
+          <ProposalTabs>
+            <ProposalTab 
+              active={activeProposalTab === 'sent'}
+              onClick={() => setActiveProposalTab('sent')}
+            >
+              보낸 제안 ({proposals.sent?.length || 0})
+            </ProposalTab>
+            <ProposalTab 
+              active={activeProposalTab === 'received'}
+              onClick={() => setActiveProposalTab('received')}
+            >
+              받은 제안 ({proposals.received?.length || 0})
+            </ProposalTab>
+          </ProposalTabs>
+          {renderProposals()}
+        </ProposalsSection>
 
         {/* 액션 버튼들 */}
-        {qrData && (
-          <StatsButton onClick={() => navigate('/owner/stats')}>
-            <span>📊</span>
-            통계 보기
-          </StatsButton>
-        )}
+        <ButtonSection>
+          <SectionTitle>⚙️ 관리</SectionTitle>
+          {qrData && (
+            <StatsButton onClick={() => navigate('/owner/stats')}>
+              <span>📊</span>
+              통계 보기
+            </StatsButton>
+          )}
 
-        {couponPolicy && (
-          <EditPolicyButton onClick={() => navigate('/owner/coupon-setup')}>
-            <span>⚙️</span>
-            쿠폰 정책 수정
-          </EditPolicyButton>
-        )}
+          {couponPolicy && (
+            <EditPolicyButton onClick={() => navigate('/owner/coupon-setup')}>
+              <span>⚙️</span>
+              쿠폰 정책 수정
+            </EditPolicyButton>
+          )}
 
-        <LogoutButton onClick={handleLogout}>
-          로그아웃
-        </LogoutButton>
+          <LogoutButton onClick={handleLogout}>
+            로그아웃
+          </LogoutButton>
+        </ButtonSection>
 
         <Footer>
           네이비즈 소상공인 제휴 플랫폼

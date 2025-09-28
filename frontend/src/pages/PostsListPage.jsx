@@ -70,117 +70,14 @@ const PageDescription = styled.p`
   margin-bottom: 1.5rem;
 `;
 
-const FilterSection = styled.div`
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(226, 232, 240, 0.6);
-  border-radius: 16px;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
-`;
-
-const FilterTitle = styled.h3`
-  font-size: 1rem;
-  font-weight: 600;
-  color: #374151;
-  margin-bottom: 1rem;
-`;
-
-const FilterGrid = styled.div`
-  display: grid;
-  gap: 1rem;
-  margin-bottom: 1rem;
-`;
-
-const FilterRow = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
-`;
-
-const FilterGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-`;
-
-const FilterLabel = styled.label`
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #374151;
-`;
-
-const FilterInput = styled.input`
-  width: 100%;
-  height: 40px;
-  padding: 0 0.75rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  
-  &:focus {
-    outline: none;
-    border-color: #10b981;
-    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1);
-  }
-`;
-
-const FilterSelect = styled.select`
-  width: 100%;
-  height: 40px;
-  padding: 0 0.75rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  background: white;
-  
-  &:focus {
-    outline: none;
-    border-color: #10b981;
-    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1);
-  }
-`;
-
-const FilterActions = styled.div`
-  display: flex;
-  gap: 0.5rem;
-`;
-
-const FilterButton = styled.button`
-  flex: 1;
-  height: 40px;
-  border: none;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-`;
-
-const ApplyButton = styled(FilterButton)`
-  background: linear-gradient(135deg, #10b981 0%, #0ea5e9 100%);
-  color: white;
-  
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-  }
-`;
-
-const ResetButton = styled(FilterButton)`
-  background: #f9fafb;
-  color: #374151;
-  border: 1px solid #e5e7eb;
-  
-  &:hover {
-    background: #f3f4f6;
-  }
-`;
-
 const NavigationTabs = styled.div`
   display: flex;
   gap: 0.75rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
+  padding: 0.5rem;
+  background: rgba(248, 250, 252, 0.8);
+  border-radius: 16px;
+  border: 1px solid rgba(226, 232, 240, 0.6);
 `;
 
 const TabButton = styled.button`
@@ -203,12 +100,12 @@ const TabButton = styled.button`
     box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
     cursor: default;
   ` : `
-    background: rgba(255, 255, 255, 0.9);
+    background: white;
     color: #374151;
-    border: 1px solid #e5e7eb;
+    border: 1px solid rgba(226, 232, 240, 0.8);
     
     &:hover {
-      background: white;
+      background: #f9fafb;
       border-color: #d1d5db;
       transform: translateY(-1px);
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -216,20 +113,152 @@ const TabButton = styled.button`
   `}
 `;
 
+const FilterSection = styled.div`
+  background: linear-gradient(135deg, #fef7ff 0%, #f0f9ff 100%);
+  border: 2px solid rgba(147, 51, 234, 0.1);
+  border-radius: 20px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 12px rgba(147, 51, 234, 0.08);
+`;
+
+const FilterTitle = styled.h3`
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #581c87;
+  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
+const FilterGrid = styled.div`
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+`;
+
+const FilterRow = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+`;
+
+const FilterGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+`;
+
+const FilterLabel = styled.label`
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #581c87;
+`;
+
+const FilterInput = styled.input`
+  width: 100%;
+  height: 40px;
+  padding: 0 0.75rem;
+  border: 2px solid rgba(147, 51, 234, 0.2);
+  border-radius: 10px;
+  font-size: 0.875rem;
+  background: white;
+  box-sizing: border-box;
+  
+  &:focus {
+    outline: none;
+    border-color: #9333ea;
+    box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.1);
+  }
+`;
+
+const FilterSelect = styled.select`
+  width: 100%;
+  height: 40px;
+  padding: 0 0.75rem;
+  border: 2px solid rgba(147, 51, 234, 0.2);
+  border-radius: 10px;
+  font-size: 0.875rem;
+  background: white;
+  box-sizing: border-box;
+  
+  &:focus {
+    outline: none;
+    border-color: #9333ea;
+    box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.1);
+  }
+`;
+
+const FilterActions = styled.div`
+  display: flex;
+  gap: 0.75rem;
+`;
+
+const FilterButton = styled.button`
+  flex: 1;
+  height: 44px;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+`;
+
+const ApplyButton = styled(FilterButton)`
+  background: linear-gradient(135deg, #9333ea 0%, #7c3aed 100%);
+  color: white;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(147, 51, 234, 0.4);
+  }
+`;
+
+const ResetButton = styled(FilterButton)`
+  background: white;
+  color: #581c87;
+  border: 2px solid rgba(147, 51, 234, 0.3);
+  
+  &:hover {
+    background: #faf5ff;
+    border-color: #9333ea;
+  }
+`;
+
+const PostsSection = styled.div`
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfeff 100%);
+  border: 2px solid rgba(16, 185, 129, 0.1);
+  border-radius: 20px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.08);
+  flex: 1;
+`;
+
+const PostsSectionTitle = styled.h3`
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #065f46;
+  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
 const PostsList = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  flex: 1;
 `;
 
 const PostCard = styled.div`
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(226, 232, 240, 0.6);
+  background: white;
+  border: 2px solid rgba(16, 185, 129, 0.15);
   border-radius: 16px;
   padding: 1.5rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.08);
   transition: all 0.3s ease;
   cursor: ${props => (props.$disabled ? 'default' : 'pointer')};
   opacity: ${props => (props.$disabled ? 0.7 : 1)};
@@ -237,8 +266,8 @@ const PostCard = styled.div`
 
   &:hover {
     ${props => !props.$disabled && `
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(16, 185, 129, 0.15);
+      transform: translateY(-3px);
       border-color: rgba(16, 185, 129, 0.3);
     `}
   }
@@ -359,9 +388,8 @@ const InfoValue = styled.p`
 const EmptyState = styled.div`
   text-align: center;
   padding: 3rem 1rem;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(226, 232, 240, 0.6);
+  background: white;
+  border: 2px dashed rgba(16, 185, 129, 0.2);
   border-radius: 16px;
 `;
 
@@ -443,7 +471,7 @@ const RetryButton = styled.button`
 
 const Footer = styled.div`
   text-align: center;
-  margin-top: 2rem;
+  margin-top: 1rem;
   color: #9ca3af;
   font-size: 0.75rem;
 `;
@@ -657,8 +685,19 @@ const PostsListPage = () => {
           <PageDescription>다른 사장님들의 제휴 제안을 확인해보세요</PageDescription>
         </LogoSection>
 
+        <NavigationTabs>
+          <TabButton onClick={() => navigate('/owner/mypage')}>
+            <span>👤</span>
+            마이페이지
+          </TabButton>
+          <TabButton $active>
+            <span>📋</span>
+            제휴 게시글
+          </TabButton>
+        </NavigationTabs>
+
         <FilterSection>
-          <FilterTitle>🔍 필터 검색</FilterTitle>
+          <FilterTitle>🔍 검색 필터</FilterTitle>
           <FilterGrid>
             <FilterRow>
               <FilterGroup>
@@ -782,93 +821,85 @@ const PostsListPage = () => {
           </FilterActions>
         </FilterSection>
 
-        <NavigationTabs>
-          <TabButton onClick={() => navigate('/owner/mypage')}>
-            <span>👤</span>
-            마이페이지
-          </TabButton>
-          <TabButton $active>
-            <span>📋</span>
-            제휴 게시글
-          </TabButton>
-        </NavigationTabs>
+        <PostsSection>
+          <PostsSectionTitle>📋 제휴 게시글 목록</PostsSectionTitle>
+          <PostsList>
+            {posts.length === 0 ? (
+              <EmptyState>
+                <EmptyIcon>📝</EmptyIcon>
+                <EmptyTitle>조건에 맞는 게시글이 없습니다</EmptyTitle>
+                <EmptyDescription>
+                  필터 조건을 변경해서 다시 검색해보세요
+                </EmptyDescription>
+              </EmptyState>
+            ) : (
+              posts.map((post) => {
+                const meta = getStatusMeta(post.is_partnered);
+                const disabled = !isPostClickable(post.is_partnered);
+                const category = post?.category;
 
-        <PostsList>
-          {posts.length === 0 ? (
-            <EmptyState>
-              <EmptyIcon>📝</EmptyIcon>
-              <EmptyTitle>조건에 맞는 게시글이 없습니다</EmptyTitle>
-              <EmptyDescription>
-                필터 조건을 변경해서 다시 검색해보세요
-              </EmptyDescription>
-            </EmptyState>
-          ) : (
-            posts.map((post) => {
-              const meta = getStatusMeta(post.is_partnered);
-              const disabled = !isPostClickable(post.is_partnered);
-              const category = post?.category;
+                return (
+                  <PostCard
+                    key={post.id}
+                    $disabled={disabled}
+                    onClick={() => !disabled && navigate(`/owner/post/${post.id}`)}
+                  >
+                    <PostHeader>
+                      <AuthorInfo>
+                        <AuthorAvatar>
+                          {getCategoryIcon(category)}
+                        </AuthorAvatar>
+                        <AuthorDetails>
+                          <PostTitle>{post.store_name}</PostTitle>
+                          <PostMeta>
+                            {getCategoryName(category)} • {post.owner_name} • {formatDate(post.updated_at)}
+                          </PostMeta>
+                        </AuthorDetails>
+                      </AuthorInfo>
+                      <StatusBadge $bg={meta.bg} $color={meta.color}>
+                        <StatusDot $dot={meta.dot} />
+                        {meta.label}
+                      </StatusBadge>
+                    </PostHeader>
 
-              return (
-                <PostCard
-                  key={post.id}
-                  $disabled={disabled}
-                  onClick={() => !disabled && navigate(`/owner/post/${post.id}`)}
-                >
-                  <PostHeader>
-                    <AuthorInfo>
-                      <AuthorAvatar>
-                        {getCategoryIcon(category)}
-                      </AuthorAvatar>
-                      <AuthorDetails>
-                        <PostTitle>{post.store_name}</PostTitle>
-                        <PostMeta>
-                          {getCategoryName(category)} • {post.owner_name} • {formatDate(post.updated_at)}
-                        </PostMeta>
-                      </AuthorDetails>
-                    </AuthorInfo>
-                    <StatusBadge $bg={meta.bg} $color={meta.color}>
-                      <StatusDot $dot={meta.dot} />
-                      {meta.label}
-                    </StatusBadge>
-                  </PostHeader>
+                    <CouponDescription>
+                      <CouponLabel>🎫 제공 쿠폰</CouponLabel>
+                      <CouponText>{post.description}</CouponText>
+                    </CouponDescription>
 
-                  <CouponDescription>
-                    <CouponLabel>🎫 제공 쿠폰</CouponLabel>
-                    <CouponText>{post.description}</CouponText>
-                  </CouponDescription>
-
-                  <CouponInfo>
-                    <InfoBox $variant="value">
-                      <InfoLabel $variant="value">예상 가치</InfoLabel>
-                      <InfoValue $variant="value">
-                        {formatPrice(post.expected_value)}원
-                      </InfoValue>
-                    </InfoBox>
-                    <InfoBox $variant="duration">
-                      <InfoLabel $variant="duration">월 한도</InfoLabel>
-                      <InfoValue $variant="duration">
-                        {post.monthly_limit}매
-                      </InfoValue>
-                    </InfoBox>
-                  </CouponInfo>
-                  
-                  {post.expected_duration && (
-                    <div style={{ 
-                      background: 'rgba(147, 51, 234, 0.1)', 
-                      borderRadius: '12px', 
-                      padding: '0.75rem', 
-                      marginBottom: '0.5rem' 
-                    }}>
-                      <InfoLabel style={{ color: '#7c2d12', margin: '0 0 0.25rem 0' }}>
-                        유효 기간: {formatDuration(post.expected_duration)}
-                      </InfoLabel>
-                    </div>
-                  )}
-                </PostCard>
-              );
-            })
-          )}
-        </PostsList>
+                    <CouponInfo>
+                      <InfoBox $variant="value">
+                        <InfoLabel $variant="value">예상 가치</InfoLabel>
+                        <InfoValue $variant="value">
+                          {formatPrice(post.expected_value)}원
+                        </InfoValue>
+                      </InfoBox>
+                      <InfoBox $variant="duration">
+                        <InfoLabel $variant="duration">월 한도</InfoLabel>
+                        <InfoValue $variant="duration">
+                          {post.monthly_limit}매
+                        </InfoValue>
+                      </InfoBox>
+                    </CouponInfo>
+                    
+                    {post.expected_duration && (
+                      <div style={{ 
+                        background: 'rgba(147, 51, 234, 0.1)', 
+                        borderRadius: '12px', 
+                        padding: '0.75rem', 
+                        marginBottom: '0.5rem' 
+                      }}>
+                        <InfoLabel style={{ color: '#7c2d12', margin: '0 0 0.25rem 0' }}>
+                          유효 기간: {formatDuration(post.expected_duration)}
+                        </InfoLabel>
+                      </div>
+                    )}
+                  </PostCard>
+                );
+              })
+            )}
+          </PostsList>
+        </PostsSection>
 
         <Footer>
           네이비즈 소상공인 제휴 플랫폼

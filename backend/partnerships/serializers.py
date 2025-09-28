@@ -165,3 +165,13 @@ class QRCodeSerializer(serializers.Serializer):
     partnership_id = serializers.IntegerField()
     slug = serializers.CharField()
     qr_code_url = serializers.URLField()
+
+
+
+class ProposalSerializer(serializers.ModelSerializer):
+    proposer_store_name = serializers.CharField(source="proposer_store.name", read_only=True)
+    recipient_store_name = serializers.CharField(source="recipient_store.name", read_only=True)
+
+    class Meta:
+        model = Proposal
+        fields = ["id", "proposer_store_name", "recipient_store_name", "status", "created_at", "updated_at"]

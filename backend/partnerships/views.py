@@ -141,3 +141,34 @@ class QRCodeView(APIView):
         })
 
         return Response(success(data=serializer.data, message="QR 이미지 조회 성공"))
+
+
+class MyProposalsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        store = request.user.store
+        sent = Proposal.objects.filter(proposer_store=store)
+        received = Proposal.objects.filter(recipient_store=store)
+
+        data = {
+            "sent": [
+                {
+                    "id": p.id,
+                    "recipient_store": p.recipient_store.name,
+                    "status": p.status,
+                    "created_at": p.created_at,
+                }
+                for p in sent
+            ],
+            "received": [
+                {
+                    "id": p.id,
+                    "proposer_store": p.proposer_store.name,
+                    "status": p.status,
+                    "created_at": p.created_at,
+                }
+                for p in received
+            ],
+        }
+        return Response(success(data=data, message="내 제안 목록 조회 성공"))
