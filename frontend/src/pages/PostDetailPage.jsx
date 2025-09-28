@@ -96,57 +96,13 @@ const Card = styled.div`
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 `;
 
-const PostTitle = styled.h3`
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #374151;
-  margin-bottom: 0.75rem;
-  text-align: center;
-`;
-
-const PostDescription = styled.p`
-  color: #6b7280;
-  font-size: 0.875rem;
-  line-height: 1.5;
-  text-align: center;
-  margin-bottom: 1rem;
-`;
-
-const PostInfo = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
-`;
-
-const InfoBox = styled.div`
-  background: ${props => props.type === 'value' ? 
-    'rgba(59, 130, 246, 0.1)' : 'rgba(147, 51, 234, 0.1)'
-  };
-  border-radius: 12px;
-  padding: 0.75rem;
-  text-align: center;
-`;
-
-const InfoLabel = styled.p`
-  font-size: 0.75rem;
-  font-weight: 600;
-  margin-bottom: 0.25rem;
-  color: ${props => props.type === 'value' ? '#1e40af' : '#7c2d12'};
-`;
-
-const InfoValue = styled.p`
-  font-size: 1rem;
-  font-weight: 700;
-  color: ${props => props.type === 'value' ? '#1e3a8a' : '#581c87'};
-`;
-
-const MerchantHeader = styled.div`
+const StoreHeader = styled.div`
   display: flex;
   align-items: center;
   margin-bottom: 1rem;
 `;
 
-const MerchantAvatar = styled.div`
+const StoreAvatar = styled.div`
   width: 60px;
   height: 60px;
   background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
@@ -158,51 +114,70 @@ const MerchantAvatar = styled.div`
   font-size: 1.5rem;
 `;
 
-const MerchantInfo = styled.div`
+const StoreInfo = styled.div`
   flex: 1;
 `;
 
-const MerchantName = styled.h3`
-  font-size: 1.125rem;
+const StoreName = styled.h2`
+  font-size: 1.25rem;
   font-weight: 700;
   color: #374151;
   margin-bottom: 0.25rem;
 `;
 
-const MerchantCategory = styled.p`
+const OwnerName = styled.p`
   font-size: 0.875rem;
   color: #6b7280;
   margin-bottom: 0.25rem;
 `;
 
-const MerchantAddress = styled.p`
+const StoreCategory = styled.p`
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-bottom: 0.25rem;
+`;
+
+const StoreAddress = styled.p`
   font-size: 0.75rem;
   color: #9ca3af;
 `;
 
-const MerchantImage = styled.img`
+const StoreImage = styled.img`
   width: 100%;
-  height: 150px;
+  height: 200px;
   object-fit: cover;
   border-radius: 12px;
   margin-bottom: 1rem;
 `;
 
-const MerchantDescription = styled.p`
-  color: #6b7280;
+const StoreDescription = styled.p`
+  color: #374151;
   font-size: 0.875rem;
   line-height: 1.5;
-`;
-
-const CouponPolicyTitle = styled.h3`
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: #374151;
   margin-bottom: 1rem;
-  text-align: center;
 `;
 
-const PolicyGrid = styled.div`
+const ContactInfo = styled.div`
+  background: rgba(99, 102, 241, 0.1);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+`;
+
+const ContactLabel = styled.p`
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #3730a3;
+  margin-bottom: 0.5rem;
+`;
+
+const ContactValue = styled.p`
+  font-size: 0.875rem;
+  color: #4338ca;
+  font-weight: 600;
+`;
+
+const PolicyInfo = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.75rem;
@@ -229,24 +204,74 @@ const PolicyValue = styled.p`
   color: #047857;
 `;
 
-const ValidPeriod = styled.div`
-  background: rgba(99, 102, 241, 0.1);
+const BusinessHours = styled.div`
+  background: rgba(147, 51, 234, 0.1);
   border-radius: 12px;
   padding: 1rem;
+  margin-bottom: 1rem;
+`;
+
+const BusinessHoursTitle = styled.h3`
+  font-size: 1rem;
+  font-weight: 700;
+  color: #581c87;
+  margin-bottom: 0.75rem;
   text-align: center;
 `;
 
-const ValidPeriodLabel = styled.p`
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #3730a3;
-  margin-bottom: 0.5rem;
+const DaySchedule = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(147, 51, 234, 0.1);
+
+  &:last-child {
+    border-bottom: none;
+  }
 `;
 
-const ValidPeriodValue = styled.p`
+const DayName = styled.span`
   font-size: 0.875rem;
-  color: #4338ca;
   font-weight: 600;
+  color: #7c2d12;
+  min-width: 40px;
+`;
+
+const DayHours = styled.span`
+  font-size: 0.875rem;
+  color: #92400e;
+`;
+
+const PartnershipStatus = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  
+  ${props => {
+    if (props.isPartnered) {
+      return `
+        background: rgba(16, 185, 129, 0.1);
+        color: #065f46;
+      `;
+    }
+    return `
+      background: rgba(107, 114, 128, 0.1);
+      color: #374151;
+    `;
+  }}
+`;
+
+const StatusDot = styled.div`
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: ${props => props.isPartnered ? '#10b981' : '#6b7280'};
 `;
 
 const ActionButton = styled.button`
@@ -289,7 +314,7 @@ const ActionButton = styled.button`
   }}
 `;
 
-const DisabledReason = styled.p`
+const ErrorMessage = styled.p`
   color: #ef4444;
   font-size: 0.875rem;
   text-align: center;
@@ -355,81 +380,38 @@ const RetryButton = styled.button`
   }
 `;
 
-const StatusBadge = styled.div`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.375rem 0.75rem;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
-  
-  ${props => {
-    if (props.status === 'open') {
-      return `
-        background: rgba(16, 185, 129, 0.1);
-        color: #065f46;
-      `;
-    }
-    return `
-      background: rgba(107, 114, 128, 0.1);
-      color: #374151;
-    `;
-  }}
-`;
-
-const StatusDot = styled.div`
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: ${props => props.status === 'open' ? '#10b981' : '#6b7280'};
-`;
-
-const PostDetailPage = () => {
+const StoreDetailPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { apiCall } = useAuth();
   
-  const [postData, setPostData] = useState(null);
-  const [partnershipStatus, setPartnershipStatus] = useState(null);
+  const [storeData, setStoreData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [proposalError, setProposalError] = useState('');
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchStoreData = async () => {
       try {
-        const [postResponse, statusResponse] = await Promise.all([
-          apiCall({
-            method: 'GET',
-            url: `/posts/${id}`,
-          }),
-          apiCall({
-            method: 'GET',
-            url: '/owner/partnership/status-check/',
-          })
-        ]);
+        const response = await apiCall({
+          method: 'GET',
+          url: `/stores/post/${id}/`,
+        });
         
-        if (postResponse.success) {
-          setPostData(postResponse.data);
+        if (response.success) {
+          setStoreData(response.data);
         } else {
-          throw new Error('게시글을 불러올 수 없습니다.');
-        }
-        
-        if (statusResponse.success) {
-          setPartnershipStatus(statusResponse.data);
-        } else {
-          throw new Error('상태를 확인할 수 없습니다.');
+          throw new Error('가게 정보를 불러올 수 없습니다.');
         }
       } catch (err) {
-        setError('게시글을 불러오는데 실패했습니다.');
+        setError('가게 정보를 불러오는데 실패했습니다.');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
+    fetchStoreData();
   }, [apiCall, id]);
 
   const getCategoryIcon = (category) => {
@@ -472,39 +454,61 @@ const PostDetailPage = () => {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     });
   };
 
-  const getDisabledReason = () => {
-    if (!partnershipStatus) return '';
-    if (postData?.post.status !== 'open') return '모집 마감된 게시글입니다';
-    if (!partnershipStatus.has_coupon_policy) return '쿠폰 정책을 먼저 설정해주세요';
-    if (partnershipStatus.has_received_proposal) return '받은 제안을 먼저 처리해주세요';
-    if (partnershipStatus.has_sent_proposal) return '이미 다른 제휴 요청을 보냈습니다';
-    if (partnershipStatus.has_active_partnership) return '이미 활성화된 제휴가 있습니다';
-    return '';
+  const getDayName = (day) => {
+    const dayNames = {
+      mon: '월',
+      tue: '화',
+      wed: '수',
+      thu: '목',
+      fri: '금',
+      sat: '토',
+      sun: '일',
+    };
+    return dayNames[day] || day;
   };
 
-  const isDisabled = () => {
-    return getDisabledReason() !== '';
+  const formatBusinessHours = (dayInfo) => {
+    if (dayInfo.closed) {
+      return '휴무';
+    }
+    
+    let hours = `${dayInfo.open} - ${dayInfo.close}`;
+    if (dayInfo.break && dayInfo.break.length === 2) {
+      hours += ` (브레이크 ${dayInfo.break[0]} - ${dayInfo.break[1]})`;
+    }
+    
+    return hours;
   };
 
   const handleProposalSubmit = async () => {
-    if (isDisabled()) return;
+    if (storeData.is_partnered) return;
 
     setSubmitting(true);
+    setProposalError('');
+    
     try {
       const response = await apiCall({
         method: 'POST',
-        url: `/proposals/${id}/send/`,
+        url: '/partnerships/propose/',
+        data: {
+          recipient_store_id: parseInt(id),
+        },
       });
 
       if (response.success) {
-        alert('제휴 요청이 성공적으로 전송되었습니다!');
+        alert(response.data.global || '제휴 요청이 성공적으로 전송되었습니다!');
         navigate('/owner/posts');
+      } else {
+        const errorMsg = response.message || '제휴 요청 전송에 실패했습니다.';
+        setProposalError(errorMsg);
       }
     } catch (err) {
-      alert('제휴 요청 전송에 실패했습니다. 다시 시도해주세요.');
+      setProposalError('제휴 요청 전송에 실패했습니다. 다시 시도해주세요.');
     } finally {
       setSubmitting(false);
     }
@@ -516,7 +520,7 @@ const PostDetailPage = () => {
         <ContentWrapper>
           <LoadingContainer>
             <LoadingSpinner />
-            <LoadingText>게시글을 불러오는 중...</LoadingText>
+            <LoadingText>가게 정보를 불러오는 중...</LoadingText>
           </LoadingContainer>
         </ContentWrapper>
       </Container>
@@ -539,11 +543,9 @@ const PostDetailPage = () => {
     );
   }
 
-  if (!postData) {
+  if (!storeData) {
     return null;
   }
-
-  const { post, author_merchant, coupon_policy } = postData;
 
   return (
     <Container>
@@ -557,87 +559,106 @@ const PostDetailPage = () => {
             <span className="neigh">Neigh</span>
             <span className="biz">Biz</span>
           </Logo>
-          <PageTitle>제휴 제안 상세</PageTitle>
+          <PageTitle>가게 상세 정보</PageTitle>
         </Header>
 
-        {/* 게시글 정보 */}
-        <Card>
-          <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
-            <StatusBadge status={post.status}>
-              <StatusDot status={post.status} />
-              {post.status === 'open' ? '모집중' : '모집마감'}
-            </StatusBadge>
-          </div>
-          <PostTitle>{post.title}</PostTitle>
-          <PostDescription>{post.description}</PostDescription>
-          <PostInfo>
-            <InfoBox type="value">
-              <InfoLabel type="value">예상 가치</InfoLabel>
-              <InfoValue type="value">
-                {formatPrice(post.expected_value)}원
-              </InfoValue>
-            </InfoBox>
-            <InfoBox type="duration">
-              <InfoLabel type="duration">유효 기간</InfoLabel>
-              <InfoValue type="duration">
-                {formatDuration(post.expected_duration)}
-              </InfoValue>
-            </InfoBox>
-          </PostInfo>
-        </Card>
+        {/* 제휴 상태 */}
+        <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+          <PartnershipStatus isPartnered={storeData.is_partnered}>
+            <StatusDot isPartnered={storeData.is_partnered} />
+            {storeData.is_partnered ? '제휴 중' : '제휴 가능'}
+          </PartnershipStatus>
+        </div>
 
-        {/* 작성자 가게 정보 */}
+        {/* 가게 기본 정보 */}
         <Card>
-          <MerchantHeader>
-            <MerchantAvatar>
-              {getCategoryIcon(author_merchant.category)}
-            </MerchantAvatar>
-            <MerchantInfo>
-              <MerchantName>{author_merchant.name}</MerchantName>
-              <MerchantCategory>{getCategoryName(author_merchant.category)}</MerchantCategory>
-              <MerchantAddress>{author_merchant.address}</MerchantAddress>
-            </MerchantInfo>
-          </MerchantHeader>
-          {author_merchant.image_url && (
-            <MerchantImage src={author_merchant.image_url} alt={author_merchant.name} />
+          <StoreHeader>
+            <StoreAvatar>
+              {getCategoryIcon(storeData.category)}
+            </StoreAvatar>
+            <StoreInfo>
+              <StoreName>{storeData.name}</StoreName>
+              <OwnerName>사장님: {storeData.owner_name}</OwnerName>
+              <StoreCategory>{getCategoryName(storeData.category)}</StoreCategory>
+              <StoreAddress>{storeData.address}</StoreAddress>
+            </StoreInfo>
+          </StoreHeader>
+          
+          {storeData.image_url && (
+            <StoreImage src={storeData.image_url} alt={storeData.name} />
           )}
-          <MerchantDescription>{author_merchant.description}</MerchantDescription>
+          
+          {storeData.description && (
+            <StoreDescription>{storeData.description}</StoreDescription>
+          )}
+
+          <ContactInfo>
+            <ContactLabel>📞 연락처</ContactLabel>
+            <ContactValue>{storeData.phone}</ContactValue>
+          </ContactInfo>
         </Card>
 
-        {/* 쿠폰 정책 */}
+        {/* 제휴 정책 정보 */}
         <Card>
-          <CouponPolicyTitle>🎫 쿠폰 정책 상세</CouponPolicyTitle>
-          <PolicyGrid>
+          <PolicyInfo>
             <PolicyBox>
-              <PolicyLabel>일일 한도</PolicyLabel>
-              <PolicyValue>{coupon_policy.daily_limit}매</PolicyValue>
+              <PolicyLabel>예상 가치</PolicyLabel>
+              <PolicyValue>{formatPrice(storeData.expected_value)}원</PolicyValue>
             </PolicyBox>
             <PolicyBox>
-              <PolicyLabel>총 한도</PolicyLabel>
-              <PolicyValue>{coupon_policy.total_limit}매</PolicyValue>
+              <PolicyLabel>예상 기간</PolicyLabel>
+              <PolicyValue>{formatDuration(storeData.expected_duration)}</PolicyValue>
             </PolicyBox>
-          </PolicyGrid>
-          <ValidPeriod>
-            <ValidPeriodLabel>유효 기간</ValidPeriodLabel>
-            <ValidPeriodValue>
-              {formatDate(coupon_policy.valid_from)} ~ {formatDate(coupon_policy.valid_until)}
-            </ValidPeriodValue>
-          </ValidPeriod>
+          </PolicyInfo>
+          
+          <PolicyBox style={{ gridColumn: 'span 2', background: 'rgba(59, 130, 246, 0.1)' }}>
+            <PolicyLabel style={{ color: '#1e40af' }}>월 한도</PolicyLabel>
+            <PolicyValue style={{ color: '#1e3a8a' }}>{storeData.monthly_limit}매</PolicyValue>
+          </PolicyBox>
+          
+          {storeData.coupon_updated_at && (
+            <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+              <p style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                쿠폰 정책 업데이트: {formatDate(storeData.coupon_updated_at)}
+              </p>
+            </div>
+          )}
         </Card>
 
-        {/* 제휴 신청 버튼 */}
-        {getDisabledReason() && (
-          <DisabledReason>{getDisabledReason()}</DisabledReason>
+        {/* 영업 시간 */}
+        {storeData.business_hours && (
+          <Card>
+            <BusinessHours>
+              <BusinessHoursTitle>🕒 영업 시간</BusinessHoursTitle>
+              {Object.entries(storeData.business_hours).map(([day, hours]) => (
+                <DaySchedule key={day}>
+                  <DayName>{getDayName(day)}</DayName>
+                  <DayHours>{formatBusinessHours(hours)}</DayHours>
+                </DaySchedule>
+              ))}
+            </BusinessHours>
+          </Card>
+        )}
+
+        {/* 에러 메시지 */}
+        {proposalError && (
+          <ErrorMessage>{proposalError}</ErrorMessage>
         )}
         
+        {/* 제휴 신청 버튼 */}
         <ActionButton 
-          disabled={isDisabled() || submitting}
+          disabled={storeData.is_partnered || submitting}
           onClick={handleProposalSubmit}
         >
           {submitting ? (
             <>
               <LoadingSpinner style={{ width: '20px', height: '20px', margin: '0' }} />
               전송 중...
+            </>
+          ) : storeData.is_partnered ? (
+            <>
+              <span>✅</span>
+              이미 제휴 중
             </>
           ) : (
             <>
@@ -651,4 +672,4 @@ const PostDetailPage = () => {
   );
 };
 
-export default PostDetailPage;
+export default StoreDetailPage;

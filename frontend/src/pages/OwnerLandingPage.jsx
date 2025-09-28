@@ -1,175 +1,197 @@
-import styled from 'styled-components';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const Container = styled.div`
-  min-height: 100vh;
-  background: linear-gradient(135deg, #f8fafc 0%, #e0f2fe 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-`;
+const Container = {
+  minHeight: '100vh',
+  background: 'linear-gradient(135deg, #f8fafc 0%, #e0f2fe 100%)',
+  display: 'flex-start',
+  alignItems: 'center',
+  justifyContent: 'center',
+  paddingTop: '2rem',
+  padding: 0,
+};
 
-const ContentWrapper = styled.div`
-  width: 100vw;
-  max-width: 390px;
-  min-height: 100vh;
-  background: white;
-  padding: 2rem 1.5rem;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  
-  @media (min-width: 391px) {
-    border-radius: 16px;
-    min-height: 844px;
-    max-height: 90vh;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    border: 1px solid rgba(226, 232, 240, 0.8);
-  }
-`;
+const ContentWrapper = {
+  width: '100vw',
+  maxWidth: '390px',
+  minHeight: 'auto',
+  background: 'white',
+  display: 'flex',
+  flexDirection: 'column',
+};
 
-const LogoSection = styled.div`
-  margin-bottom: 3rem;
-`;
+// Hero Section
+const HeroSection = {
+  background: 'linear-gradient(135deg, #4CE6D1 0%, #A0F6D2 100%)',
+  padding: '3rem 1.5rem 2rem',
+  textAlign: 'center',
+  position: 'relative',
+  overflow: 'hidden',
+};
 
-const Logo = styled.h1`
-  font-size: 2.75rem;
-  font-weight: 800;
-  margin-bottom: 0.5rem;
-  letter-spacing: -0.02em;
-  
-  .neigh {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-  
-  .biz {
-    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-`;
+const Logo = {
+  fontSize: '2.5rem',
+  fontWeight: 800,
+  marginBottom: '2.0rem',
+  letterSpacing: '-0.02em',
+  color: '#1f2937',
+  position: 'relative',
+  zIndex: 1,
+};
 
-const Tagline = styled.p`
-  color: #64748b;
-  font-size: 0.95rem;
-  font-weight: 500;
-`;
 
-const Description = styled.p`
-  color: #475569;
-  font-size: 1rem;
-  line-height: 1.6;
-  margin-bottom: 2.5rem;
-  font-weight: 400;
-`;
+// Main Content
+const MainContent = {
+  flex: 1,
+  padding: '2rem 1.5rem',
+};
 
-const FeatureBox = styled.div`
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(226, 232, 240, 0.6);
-  border-radius: 16px;
-  padding: 1.5rem;
-  margin-bottom: 2.5rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-`;
+const ValueProposition = {
+  textAlign: 'center',
+  marginBottom: '2.5rem',
+};
 
-const FeatureList = styled.ul`
-  list-style: none;
-  padding: 0;
-  margin: 0;
-`;
+const MainHeadline = {
+  fontSize: '1.4rem',
+  fontWeight: 700,
+  color: '#1f2937',
+  lineHeight: 1.4,
+  marginBottom: '1rem',
+};
 
-const FeatureItem = styled.li`
-  display: flex;
-  align-items: center;
-  color: #374151;
-  font-size: 0.9rem;
-  font-weight: 500;
-  margin-bottom: 0.75rem;
-  
-  &:last-child {
-    margin-bottom: 0;
-  }
+const SubHeadline = {
+  color: '#6b7280',
+  fontSize: '1rem',
+  lineHeight: 1.6,
+  fontWeight: 500,
+};
 
-  &:before {
-    content: "✓";
-    display: inline-block;
-    width: 20px;
-    height: 20px;
-    background: linear-gradient(135deg, #10b981 0%, #0ea5e9 100%);
-    color: white;
-    border-radius: 50%;
-    font-size: 12px;
-    font-weight: bold;
-    text-align: center;
-    line-height: 20px;
-    margin-right: 12px;
-    flex-shrink: 0;
-  }
-`;
+// Features Section
+const FeaturesSection = {
+  border: '3px solid rgba(76, 230, 209, 0.5)',
+  boxShadow: '0 4px 12px rgba(76, 230, 209, 0.3)',
+  marginBottom: '2rem',
+};
 
-const ButtonGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-`;
+const FeatureSlider = {
+  position: 'relative',
+  overflow: 'hidden',
+  height: '200px',
+  borderRadius: '12px',
+  marginBottom: '2rem',
+};
 
-const PrimaryButton = styled.button`
-  width: 100%;
-  height: 52px;
-  background: linear-gradient(135deg, #10b981 0%, #0ea5e9 100%);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+const FeatureTrack = {
+  display: 'flex',
+  height: '100%',
+  transition: 'transform 0.5s ease-in-out',
+};
 
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
-  }
+const FeatureSlide = {
+  minWidth: '85.5%',
+  padding: '1.5rem',
+  background: 'rgba(255, 255, 255, 0.95)',
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'center',
+  textAlign: 'left',
+};
 
-  &:active {
-    transform: translateY(0);
-  }
-`;
+const FeatureIcon = {
+  width: '48px',
+  height: '48px',
+  borderRadius: '12px',
+  background: 'linear-gradient(135deg, #4CE6D1 0%, #A0F6D2 100%)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginBottom: '1rem',
+};
 
-const SecondaryButton = styled.button`
-  width: 100%;
-  height: 52px;
-  background: rgba(255, 255, 255, 0.9);
-  color: #374151;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(10px);
+const FeatureTitle = {
+  fontSize: '1rem',
+  fontWeight: 700,
+  color: '#1f2937',
+  marginBottom: '0.5rem',
+};
 
-  &:hover {
-    background: white;
-    border-color: #d1d5db;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
+const FeatureDescription = {
+  fontSize: '0.9rem',
+  color: '#6b7280',
+  lineHeight: 1.5,
+  fontWeight: 500,
+};
 
-  &:active {
-    transform: translateY(0);
-  }
-`;
+// CTA Section
+const CTASection = {
+  padding: '1.5rem',
+  background: 'white',
+  borderTop: '1px solid #f3f4f6',
+};
+
+const ButtonGroup = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '0.75rem',
+};
+
+const PrimaryButton = {
+  width: '100%',
+  height: '56px',
+  background: '#1f2937',
+  color: 'white',
+  border: 'none',
+  borderRadius: '12px',
+  fontSize: '1.1rem',
+  fontWeight: 700,
+  cursor: 'pointer',
+  transition: 'all 0.3s ease',
+  boxShadow: '0 4px 12px rgba(31, 41, 55, 0.3)',
+};
+
+const SecondaryButton = {
+  width: '100%',
+  height: '56px',
+  background: 'white',
+  color: '#374151',
+  border: '2px solid #e5e7eb',
+  borderRadius: '12px',
+  fontSize: '1.1rem',
+  fontWeight: 700,
+  cursor: 'pointer',
+  transition: 'all 0.3s ease',
+};
 
 const OwnerLandingPage = () => {
   const navigate = useNavigate();
+  const [currentSlide, setCurrentSlide] = useState(0);
+  
+  const features = [
+    {
+      title: "원클릭 제휴 시스템",
+      description: "QR 코드 스캔만으로 즉시 제휴 참여\n복잡한 계약서나 협상 과정 불필요"
+    },
+    {
+      title: "스마트 매칭",
+      description: "업종과 위치를 고려한 최적의\n제휴 파트너 자동 추천 시스템"
+    },
+    {
+      title: "실시간 성과 분석",
+      description: "제휴 효과와 고객 유입 현황을\n한눈에 확인할 수 있는 대시보드"
+    },
+    {
+      title: "고객 확장 효과",
+      description: "제휴 가게 고객들의 자연스러운\n교차 방문으로 신규 고객 확보"
+    }
+  ];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % features.length);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [features.length]);
   
   const handleLogin = () => {
     navigate('/login');
@@ -181,41 +203,135 @@ const OwnerLandingPage = () => {
     console.log('회원가입 페이지로 이동');
   };
 
+
   return (
-    <Container>
-      <ContentWrapper>
-        <LogoSection>
-          <Logo>
-            <span className="neigh">Neigh</span>
-            <span className="biz">Biz</span>
-          </Logo>
-          <Tagline>사장님 센터</Tagline>
-        </LogoSection>
+    <div style={Container}>
+      <div style={ContentWrapper}>
+        {/* Hero Section */}
+        <div style={HeroSection}>
+          <div 
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundImage: 'url(/images/business-network-pattern.png)',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              opacity: 0.1,
+            }}
+          />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', marginBottom: '1rem' }}>
+            <img 
+              src="/images/logo.png" 
+              alt="NeighBiz Logo" 
+              style={{
+                width: '60px',
+                height: '60px',
+                position: 'relative',
+                zIndex: 1,
+              }}
+            />
+            <h1 style={Logo}>
+              <span>Neigh</span>
+              <span>Biz</span>
+            </h1>
+          </div>
+        </div>
 
-        <Description>
-          우리 동네 가게들과 제휴하고<br />
-          고객에게 특별한 혜택을 제공하세요
-        </Description>
+        <div style={MainContent}>
+          {/* Value Proposition */}
+          <div style={ValueProposition}>
+            <h2 style={MainHeadline}>
+              제휴로 시작하는<br />
+              매출 성장의 새로운 기회
+            </h2>
+            <p style={SubHeadline}>
+              복잡한 제휴 과정을 간소화하고<br />
+              실질적인 비즈니스 성과를 만들어보세요
+            </p>
+          </div>
 
-        <FeatureBox>
-          <FeatureList>
-            <FeatureItem>QR 코드로 간편한 쿠폰 발급</FeatureItem>
-            <FeatureItem>제휴 가게와 상호 마케팅 효과</FeatureItem>
-            <FeatureItem>실시간 성과 분석 대시보드</FeatureItem>
-            <FeatureItem>고객 재방문율 증대</FeatureItem>
-          </FeatureList>
-        </FeatureBox>
+          {/* Features */}
+          <div style={FeaturesSection}>
+            <div style={FeatureSlider}>
+              <div 
+                style={{
+                  ...FeatureTrack,
+                  transform: `translateX(-${currentSlide * 100}%)`
+                }}
+              >
+                {features.map((feature, index) => (
+                  <div key={index} style={FeatureSlide}>
+                    <div style={FeatureIcon}>
+                      <img 
+                        src="/images/example.png" 
+                        alt={feature.title} 
+                        style={{
+                          width: '24px',
+                          height: '24px',
+                          filter: 'brightness(0) saturate(100%) invert(15%) sepia(7%) saturate(1309%) hue-rotate(169deg) brightness(94%) contrast(87%)',
+                        }}
+                      />
+                    </div>
+                    <h3 style={FeatureTitle}>{feature.title}</h3>
+                    <p style={FeatureDescription}>
+                      {feature.description.split('\n').map((line, i) => (
+                        <span key={i}>
+                          {line}
+                          {i < feature.description.split('\n').length - 1 && <br />}
+                        </span>
+                      ))}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
 
-        <ButtonGroup>
-          <PrimaryButton onClick={handleLogin}>
-            로그인하기
-          </PrimaryButton>
-          <SecondaryButton onClick={handleSignup}>
-            회원가입하기
-          </SecondaryButton>
-        </ButtonGroup>
-        </ContentWrapper>
-    </Container>
+        {/* CTA Section */}
+        <div style={CTASection}>
+          <div style={ButtonGroup}>
+            <button 
+              style={PrimaryButton}
+              onClick={handleLogin}
+              onMouseEnter={(e) => {
+                e.target.style.background = '#374151';
+                e.target.style.transform = 'translateY(-2px)';
+                e.target.style.boxShadow = '0 8px 20px rgba(31, 41, 55, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = '#1f2937';
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = '0 4px 12px rgba(31, 41, 55, 0.3)';
+              }}
+            >
+              비즈니스 시작하기
+            </button>
+            <button 
+              style={SecondaryButton}
+              onClick={handleSignup}
+              onMouseEnter={(e) => {
+                e.target.style.borderColor = '#4CE6D1';
+                e.target.style.color = '#1f2937';
+                e.target.style.transform = 'translateY(-1px)';
+                e.target.style.boxShadow = '0 4px 12px rgba(76, 230, 209, 0.2)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.borderColor = '#e5e7eb';
+                e.target.style.color = '#374151';
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = '0 0 0 transparent';
+              }}
+            >
+              파트너 등록하기
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
