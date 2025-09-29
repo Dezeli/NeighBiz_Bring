@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../../context/AuthContext';
 
 const Container = styled.div`
   min-height: 100vh;
   background: linear-gradient(135deg, #f8fafc 0%, #e0f2fe 100%);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   padding: 0;
 `;
@@ -57,22 +57,9 @@ const Logo = styled.h1`
   }
 `;
 
-const PageTitle = styled.h2`
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #374151;
-  margin-bottom: 0.5rem;
-`;
-
-const PageDescription = styled.p`
-  color: #6b7280;
-  font-size: 0.875rem;
-  margin-bottom: 1.5rem;
-`;
-
 const NavigationTabs = styled.div`
   display: flex;
-  gap: 0.75rem;
+  gap: 0.5rem;
   margin-bottom: 2rem;
   padding: 0.5rem;
   background: rgba(248, 250, 252, 0.8);
@@ -85,14 +72,15 @@ const TabButton = styled.button`
   height: 48px;
   border: none;
   border-radius: 12px;
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 0.25rem;
   
   ${props => props.$active ? `
     background: linear-gradient(135deg, #10b981 0%, #0ea5e9 100%);
@@ -111,6 +99,14 @@ const TabButton = styled.button`
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
   `}
+`;
+
+const TabIcon = styled.span`
+  font-size: 1rem;
+`;
+
+const TabLabel = styled.span`
+  font-size: 0.7rem;
 `;
 
 const FilterSection = styled.div`
@@ -521,7 +517,6 @@ const PostsListPage = () => {
         url: `/stores/posts/?${queryString}`,
       });
 
-      // API 응답 구조: { success: true, data: { results: [...] } }
       let postsData = [];
       if (response && response.data && response.data.results && Array.isArray(response.data.results)) {
         postsData = response.data.results;
@@ -642,7 +637,7 @@ const PostsListPage = () => {
     }
   };
 
-  const isPostClickable = (isPartnered) => !isPartnered; // 제휴완료면 클릭 불가
+  const isPostClickable = (isPartnered) => !isPartnered;
 
   if (loading && posts.length === 0) {
     return (
@@ -684,13 +679,17 @@ const PostsListPage = () => {
         </LogoSection>
 
         <NavigationTabs>
-          <TabButton onClick={() => navigate('/owner/mypage')}>
-            <span>👤</span>
-            마이페이지
+          <TabButton onClick={() => navigate('/owner/posts')}>
+            <TabIcon>📋</TabIcon>
+            <TabLabel>게시글</TabLabel>
           </TabButton>
-          <TabButton $active>
-            <span>📋</span>
-            제휴 게시글
+          <TabButton onClick={() => navigate('/owner/proposals')}>
+            <TabIcon>🤝</TabIcon>
+            <TabLabel>제휴관리</TabLabel>
+          </TabButton>
+          <TabButton onClick={() => navigate('/owner/profile')}>
+            <TabIcon>👤</TabIcon>
+            <TabLabel>마이페이지</TabLabel>
           </TabButton>
         </NavigationTabs>
 

@@ -91,6 +91,7 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     apiCall,
+    fetchUser,
   };
 
   return (

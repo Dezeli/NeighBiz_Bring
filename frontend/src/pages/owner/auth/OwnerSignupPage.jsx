@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
-import api from '../utils/api';
+import api from '../../../utils/api';
 
 const Container = styled.div`
   min-height: 100vh;

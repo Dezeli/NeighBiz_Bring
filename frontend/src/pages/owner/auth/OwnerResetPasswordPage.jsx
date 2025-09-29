@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import api from '../utils/api';
+import api from '../../../utils/api';
 
 const Container = styled.div`
   min-height: 100vh;
@@ -185,7 +185,7 @@ const SuccessText = styled.p`
   text-align: center;
 `;
 
-const FoundUsername = styled.div`
+const NewPasswordInfo = styled.div`
   background: white;
   border: 1px solid rgba(16, 185, 129, 0.3);
   border-radius: 12px;
@@ -253,7 +253,8 @@ const BackButton = styled.button`
   }
 `;
 
-const FindIdPage = () => {
+const ResetPasswordPage = () => {
+  const [username, setUsername] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const [name, setName] = useState('');
@@ -262,7 +263,7 @@ const FindIdPage = () => {
   const [timer, setTimer] = useState(0);
   const [isVerificationSent, setIsVerificationSent] = useState(false);
   const [isPhoneVerified, setIsPhoneVerified] = useState(false);
-  const [foundUsername, setFoundUsername] = useState('');
+  const [newPassword, setNewPassword] = useState('');
   const [showResult, setShowResult] = useState(false);
   const navigate = useNavigate();
 
@@ -353,35 +354,37 @@ const FindIdPage = () => {
     }
   };
 
-  const handleFindUsername = async () => {
+  const handleResetPassword = async () => {
     setError('');
     setIsLoading(true);
 
     try {
-      const res = await api.post('/accounts/find-username/', {
+      const res = await api.post('/accounts/reset-password/', {
+        username: username.trim(),
         phone_number: formatPhoneNumber(phoneNumber),
         name: name.trim()
       });
 
       if (!res.data.success) {
-        setError(res.data.message || '아이디 찾기에 실패했습니다.');
+        setError(res.data.message || '비밀번호 재설정에 실패했습니다.');
         return;
       }
 
-      setFoundUsername(res.data.data.username);
+      // 임시 비밀번호가 응답에 있다고 가정
+      setNewPassword(res.data.data.temporary_password || '새로운 비밀번호가 발급되었습니다.');
       setShowResult(true);
     } catch (err) {
       if (err.response && err.response.data) {
-        setError(err.response.data.message || '아이디 찾기에 실패했습니다.');
+        setError(err.response.data.message || '비밀번호 재설정에 실패했습니다.');
       } else {
-        setError('아이디 찾기에 실패했습니다. 네트워크를 확인해주세요.');
+        setError('비밀번호 재설정에 실패했습니다. 네트워크를 확인해주세요.');
       }
     } finally {
       setIsLoading(false);
     }
   };
 
-  const canFindUsername = isPhoneVerified && name.trim();
+  const canResetPassword = isPhoneVerified && username.trim() && name.trim();
 
   if (showResult) {
     return (
@@ -392,16 +395,19 @@ const FindIdPage = () => {
               <span className="neigh">Neigh</span>
               <span className="biz">Biz</span>
             </Logo>
-            <Subtitle>아이디 찾기</Subtitle>
+            <Subtitle>비밀번호 재설정</Subtitle>
           </LogoSection>
 
           <FormContainer>
             <SuccessContainer>
-              <span style={{ fontSize: '2rem' }}>🎉</span>
-              <SuccessText>아이디를 찾았습니다!</SuccessText>
-              <FoundUsername>
-                {foundUsername}
-              </FoundUsername>
+              <span style={{ fontSize: '2rem' }}>🔑</span>
+              <SuccessText>임시 비밀번호가 발급되었습니다!</SuccessText>
+              <NewPasswordInfo>
+                임시 비밀번호: <strong>{newPassword}</strong>
+              </NewPasswordInfo>
+              <SuccessText style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.5rem' }}>
+                이 비밀번호를 복사해서 로그인 후 반드시 변경해주세요.
+              </SuccessText>
               <ActionButton
                 type="button"
                 onClick={() => navigate('/login')}
@@ -423,11 +429,22 @@ const FindIdPage = () => {
             <span className="neigh">Neigh</span>
             <span className="biz">Biz</span>
           </Logo>
-          <Subtitle>아이디 찾기</Subtitle>
+          <Subtitle>비밀번호 재설정</Subtitle>
         </LogoSection>
 
         <FormContainer>
           <Form>
+            <InputGroup>
+              <Label>아이디</Label>
+              <Input
+                type="text"
+                placeholder="아이디를 입력하세요"
+                value={username}
+                onChange={e => setUsername(e.target.value)}
+                disabled={isLoading}
+              />
+            </InputGroup>
+
             <InputGroup>
               <Label>전화번호</Label>
               <InputRow>
@@ -498,18 +515,18 @@ const FindIdPage = () => {
             {isPhoneVerified && (
               <ActionButton
                 type="button"
-                onClick={handleFindUsername}
-                disabled={isLoading || !canFindUsername}
+                onClick={handleResetPassword}
+                disabled={isLoading || !canResetPassword}
               >
                 {isLoading ? (
                   <>
                     <LoadingSpinner />
-                    검색 중...
+                    처리 중...
                   </>
                 ) : (
                   <>
-                    <span>🔍</span>
-                    아이디 찾기
+                    <span>🔐</span>
+                    비밀번호 재설정
                   </>
                 )}
               </ActionButton>
@@ -525,4 +542,4 @@ const FindIdPage = () => {
   );
 };
 
-export default FindIdPage;
+export default ResetPasswordPage;

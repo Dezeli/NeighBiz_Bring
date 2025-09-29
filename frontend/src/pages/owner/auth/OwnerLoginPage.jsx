@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import api from '../utils/api';
-import { useAuth } from '../context/AuthContext';
+import api from '../../../utils/api';
+import { useAuth } from '../../../context/AuthContext';
 
 const Container = styled.div`
   min-height: 100vh;
@@ -282,7 +282,7 @@ const OwnerLoginPage = () => {
 
       const { access, refresh } = res.data.data;
       await login(access, refresh);
-      navigate('/owner/mypage');
+      navigate('/owner/profile');
     } catch (err) {
       if (err.response && err.response.data) {
         setError(err.response.data.message || '로그인에 실패했습니다.');
