@@ -659,7 +659,7 @@ const OwnerSignupPage = () => {
       if (imageType === 'store_image') {
         setFormData(prev => ({
           ...prev,
-          store: { ...prev.store, image_url: `https://neighbiz-dev.s3.amazonaws.com/${key}` }
+          store: { ...prev.store, image_url: `${key}` }
         }));
       } else {
         setFormData(prev => ({ ...prev, business_license_image: key }));

@@ -85,6 +85,7 @@ class StoreProfileSerializer(serializers.ModelSerializer):
 
 
 class PostSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(source="store.id")
     store_name = serializers.CharField(source="store.name", read_only=True)
     owner_name = serializers.CharField(source="store.owner.name", read_only=True)
     category = serializers.CharField(source="store.category", read_only=True)

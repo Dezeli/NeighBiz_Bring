@@ -681,8 +681,6 @@ const PostsListPage = () => {
             <span className="neigh">Neigh</span>
             <span className="biz">Biz</span>
           </Logo>
-          <PageTitle>제휴 게시글</PageTitle>
-          <PageDescription>다른 사장님들의 제휴 제안을 확인해보세요</PageDescription>
         </LogoSection>
 
         <NavigationTabs>
