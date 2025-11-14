@@ -19,3 +19,4 @@ export { default as SectionHeader } from "./SectionHeader";
 export { default as Spacer } from "./Spacer";
 export { default as Grid } from "./Grid";
 export { default as Hero } from "./Hero";
+export { ErrorBox, WarningBox, SuccessBox, InfoBox, NeutralBox } from "./Feedback";
