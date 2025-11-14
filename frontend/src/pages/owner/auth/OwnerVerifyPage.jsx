@@ -16,6 +16,8 @@ import {
   SectionCard,
   Hero,
   Spacer,
+  ErrorBox,
+  SuccessBox,
 } from "../../../design/components";
 
 import { colors } from "../../../design/tokens/colors";
@@ -37,6 +39,7 @@ export default function OwnerVerifyPage() {
   // 즉시 관리자 승인 처리
   const handleVerify = async (e) => {
     e.preventDefault();
+    setError("");
 
     if (!adminPassword.trim()) {
       setError("관리자 비밀번호를 입력해주세요.");
@@ -44,7 +47,6 @@ export default function OwnerVerifyPage() {
     }
 
     setLoading(true);
-    setError("");
 
     try {
       const res = await apiCall({
@@ -60,7 +62,10 @@ export default function OwnerVerifyPage() {
         setError(res?.message || "관리자 비밀번호가 올바르지 않습니다.");
       }
     } catch (err) {
-      setError("인증 처리 중 오류가 발생했습니다.");
+      const serverMsg =
+        err.response?.data?.message ||
+        "인증 처리 중 오류가 발생했습니다.";
+      setError(serverMsg);
     } finally {
       setLoading(false);
     }
@@ -70,30 +75,33 @@ export default function OwnerVerifyPage() {
   // 파일 선택
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (!file.type.startsWith("image/")) {
-        setError("이미지 파일만 업로드 가능합니다.");
-        return;
-      }
-      setSelectedFile(file);
-      setError("");
-      setUploadSuccess("");
+
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setError("이미지 파일만 업로드 가능합니다.");
+      return;
     }
+
+    setSelectedFile(file);
+    setError("");
+    setUploadSuccess("");
   };
 
   // ------------------------------------------------------------
-  // 사업자등록증 업로드 → 재심사 요청
+  // 사업자등록증 업로드 후 재심사 요청
   const handleUpload = async () => {
+    setError("");
+    setUploadSuccess("");
+
     if (!selectedFile) {
       setError("파일을 선택해주세요.");
       return;
     }
 
     setUploadLoading(true);
-    setError("");
 
     try {
-      // S3 presigned URL 요청
       const presign = await apiCall({
         method: "POST",
         url: "/upload/image/",
@@ -111,14 +119,12 @@ export default function OwnerVerifyPage() {
         throw new Error("업로드 URL을 받지 못했습니다.");
       }
 
-      // S3 업로드
       await fetch(uploadUrl, {
         method: "PUT",
         headers: { "Content-Type": selectedFile.type },
         body: selectedFile,
       });
 
-      // 서버에 키 저장 (재심사 요청)
       const patch = await apiCall({
         method: "PATCH",
         url: "/accounts/owner-license/",
@@ -132,7 +138,10 @@ export default function OwnerVerifyPage() {
         setError(patch?.message || "업로드에 실패했습니다.");
       }
     } catch (err) {
-      setError("사업자등록증 업로드 중 오류가 발생했습니다.");
+      const serverMsg =
+        err.response?.data?.message ||
+        "사업자등록증 업로드 중 오류가 발생했습니다.";
+      setError(serverMsg);
     } finally {
       setUploadLoading(false);
     }
@@ -142,7 +151,6 @@ export default function OwnerVerifyPage() {
   return (
     <MobileShell>
       <PageContainer>
-
         <Hero title="승인 대기중" />
 
         <StatusEmoji>⏱️</StatusEmoji>
@@ -167,7 +175,7 @@ export default function OwnerVerifyPage() {
             }}
           />
 
-          {error && <ErrorBox>⚠ {error}</ErrorBox>}
+          {error && <ErrorBox>{error}</ErrorBox>}
 
           <PrimaryButton onClick={handleVerify} disabled={loading}>
             {loading ? "처리 중..." : "즉시 인증하기"}
@@ -196,14 +204,15 @@ export default function OwnerVerifyPage() {
             style={{ display: "none" }}
           />
 
+          {error && <ErrorBox>{error}</ErrorBox>}
+          {uploadSuccess && <SuccessBox>{uploadSuccess}</SuccessBox>}
+
           <PrimaryButton
             onClick={handleUpload}
             disabled={!selectedFile || uploadLoading}
           >
             {uploadLoading ? "업로드 중..." : "사업자등록증 제출"}
           </PrimaryButton>
-
-          {uploadSuccess && <SuccessBox>{uploadSuccess}</SuccessBox>}
         </SectionCard>
 
         <Spacer size="xl" />
@@ -211,7 +220,6 @@ export default function OwnerVerifyPage() {
         <SubtleButton onClick={() => navigate("/login")}>
           ← 로그인 페이지로 돌아가기
         </SubtleButton>
-
       </PageContainer>
     </MobileShell>
   );
@@ -231,25 +239,7 @@ const StatusText = styled.div`
   font-size: 1rem;
   color: ${colors.textSecondary};
   line-height: 1.5;
-`;
-
-const ErrorBox = styled.div`
-  width: 100%;
-  background: ${colors.errorLight};
-  color: ${colors.error};
-  padding: ${spacing.md}px;
-  border-radius: 8px;
-  margin-top: ${spacing.sm}px;
-`;
-
-const SuccessBox = styled.div`
-  width: 100%;
-  background: ${colors.successLight};
-  color: ${colors.success};
-  padding: ${spacing.md}px;
-  border-radius: 8px;
-  margin-top: ${spacing.sm}px;
-  font-size: 14px;
+  margin-bottom: ${spacing.md}px;
 `;
 
 const InfoText = styled.div`
@@ -261,6 +251,7 @@ const InfoText = styled.div`
 
 const FileLabel = styled.label`
   width: 100%;
+  box-sizing: border-box;
   padding: ${spacing.md}px;
   border: 1.5px dashed ${colors.primary};
   text-align: center;

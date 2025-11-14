@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
-
 import api from "../../../utils/api";
 
 // Layout + UI
@@ -15,6 +14,8 @@ import {
   Hero,
   Spacer,
   Divider,
+  ErrorBox,
+  SuccessBox,
 } from "../../../design/components";
 
 import { colors } from "../../../design/tokens/colors";
@@ -23,18 +24,22 @@ import { spacing } from "../../../design/tokens/spacing";
 export default function ResetPasswordPage() {
   const navigate = useNavigate();
 
+  // Fields
   const [username, setUsername] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
   const [name, setName] = useState("");
 
+  // Status
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  // Verification
   const [timer, setTimer] = useState(0);
   const [isVerificationSent, setIsVerificationSent] = useState(false);
   const [isPhoneVerified, setIsPhoneVerified] = useState(false);
 
+  // Result
   const [newPassword, setNewPassword] = useState("");
   const [showResult, setShowResult] = useState(false);
 
@@ -57,13 +62,13 @@ export default function ResetPasswordPage() {
   const cleanPhone = (v) => v.replace(/\D/g, "");
 
   // ---------------------------------------------------------
-  // Handlers
+  // Send Code
   const handleSendCode = async () => {
     setError("");
-
     const phone = cleanPhone(phoneNumber);
+
     if (phone.length !== 11) {
-      setError("올바른 전화번호를 입력해주세요.");
+      setError("올바른 전화번호 11자리를 입력해주세요.");
       return;
     }
 
@@ -74,23 +79,29 @@ export default function ResetPasswordPage() {
       });
 
       if (!res.data.success) {
-        setError(res.data.message);
+        setError(res.data.message || "인증번호 발송에 실패했습니다.");
         return;
       }
 
       setVerificationCode("");
-      setTimer(180); // 3분
+      setTimer(180);
       setIsVerificationSent(true);
-
-    } catch {
-      setError("인증번호 발송에 실패했습니다.");
+    } catch (err) {
+      const serverMsg =
+        err.response?.data?.message ||
+        "인증번호 발송 중 오류가 발생했습니다.";
+      setError(serverMsg);
     } finally {
       setIsLoading(false);
     }
   };
 
+  // ---------------------------------------------------------
+  // Verify Code
   const handleVerifyCode = async () => {
     setIsLoading(true);
+    setError("");
+
     try {
       const res = await api.post("/accounts/phone-verify/", {
         phone_number: cleanPhone(phoneNumber),
@@ -98,24 +109,28 @@ export default function ResetPasswordPage() {
       });
 
       if (!res.data.success) {
-        setError(res.data.message);
+        setError(res.data.message || "인증번호가 올바르지 않습니다.");
         return;
       }
 
       setIsPhoneVerified(true);
-
-    } catch {
-      setError("인증번호 확인에 실패했습니다.");
+    } catch (err) {
+      const serverMsg =
+        err.response?.data?.message ||
+        "인증번호 확인 중 오류가 발생했습니다.";
+      setError(serverMsg);
     } finally {
       setIsLoading(false);
     }
   };
 
+  // ---------------------------------------------------------
+  // Reset Password (Issue Temporary Password)
   const handleResetPassword = async () => {
     setError("");
     setIsLoading(true);
 
-    try{
+    try {
       const res = await api.post("/accounts/reset-password/", {
         username: username.trim(),
         phone_number: cleanPhone(phoneNumber),
@@ -123,18 +138,18 @@ export default function ResetPasswordPage() {
       });
 
       if (!res.data.success) {
-        setError(res.data.message);
+        setError(res.data.message || "비밀번호 재설정에 실패했습니다.");
         return;
       }
 
-      const tempPw =
-        res.data.data.temporary_password || "임시 비밀번호 발급됨";
-
-      setNewPassword(tempPw);
+      const tempPw = res.data.data?.temporary_password;
+      setNewPassword(tempPw || "임시 비밀번호가 발급되었습니다.");
       setShowResult(true);
-
-    } catch {
-      setError("비밀번호 재설정 중 오류가 발생했습니다.");
+    } catch (err) {
+      const serverMsg =
+        err.response?.data?.message ||
+        "비밀번호 재설정 중 오류가 발생했습니다.";
+      setError(serverMsg);
     } finally {
       setIsLoading(false);
     }
@@ -148,19 +163,16 @@ export default function ResetPasswordPage() {
     return (
       <MobileShell>
         <PageContainer>
-          <Hero />
+          <Hero title="비밀번호 재설정 완료" />
 
-          <SectionCard title="비밀번호 재설정 완료">
+          <SectionCard>
             <ResultEmoji>🔑</ResultEmoji>
+            <SuccessBox>임시 비밀번호가 발급되었습니다!</SuccessBox>
 
-            <InfoText>임시 비밀번호가 발급되었습니다!</InfoText>
-
-            <TemporaryPwBox>
-              {newPassword}
-            </TemporaryPwBox>
+            <TemporaryPwBox>{newPassword}</TemporaryPwBox>
 
             <SmallHint>
-              로그인 후 반드시 비밀번호를 변경해주세요.
+              로그인 후 반드시 새 비밀번호로 변경해주세요.
             </SmallHint>
 
             <PrimaryButton onClick={() => navigate("/login")}>
@@ -169,7 +181,6 @@ export default function ResetPasswordPage() {
           </SectionCard>
 
           <Spacer size="lg" />
-
           <SubtleButton onClick={() => navigate("/login")}>
             ← 로그인으로 돌아가기
           </SubtleButton>
@@ -183,11 +194,9 @@ export default function ResetPasswordPage() {
   return (
     <MobileShell>
       <PageContainer>
-
         <Hero title="비밀번호 재설정" />
 
         <SectionCard title="본인 확인">
-
           <Input
             label="아이디"
             placeholder="아이디를 입력하세요"
@@ -215,7 +224,7 @@ export default function ResetPasswordPage() {
             </PrimaryButton>
           )}
 
-          {/* Verification */}
+          {/* Verification Code */}
           {isVerificationSent && !isPhoneVerified && (
             <>
               <Input
@@ -230,20 +239,17 @@ export default function ResetPasswordPage() {
                 onClick={handleVerifyCode}
                 disabled={verificationCode.length !== 6}
               >
-                인증 확인
+                {isLoading ? "확인 중..." : "인증 확인"}
               </PrimaryButton>
             </>
           )}
 
-          {isPhoneVerified && (
-            <VerifiedText>✓ 번호 인증 완료</VerifiedText>
-          )}
+          {isPhoneVerified && <SuccessBox>✓ 번호 인증 완료</SuccessBox>}
 
           {/* Name */}
           {isPhoneVerified && (
             <>
               <Divider />
-
               <Input
                 label="이름"
                 placeholder="가입 시 등록한 이름"
@@ -260,7 +266,7 @@ export default function ResetPasswordPage() {
             </>
           )}
 
-          {error && <ErrorBox>⚠ {error}</ErrorBox>}
+          {error && <ErrorBox>{error}</ErrorBox>}
         </SectionCard>
 
         <Spacer size="lg" />
@@ -268,7 +274,6 @@ export default function ResetPasswordPage() {
         <SubtleButton onClick={() => navigate("/login")}>
           ← 로그인으로 돌아가기
         </SubtleButton>
-
       </PageContainer>
     </MobileShell>
   );
@@ -278,28 +283,9 @@ export default function ResetPasswordPage() {
    Styles
 --------------------------------------------------------- */
 
-const VerifiedText = styled.div`
-  color: ${colors.success};
-  font-size: 14px;
-`;
-
-const ErrorBox = styled.div`
-  width: 100%;
-  background: ${colors.errorLight};
-  color: ${colors.error};
-  padding: ${spacing.md}px;
-  border-radius: 8px;
-`;
-
 const ResultEmoji = styled.div`
   font-size: 3rem;
   text-align: center;
-`;
-
-const InfoText = styled.div`
-  color: ${colors.textPrimary};
-  text-align: center;
-  margin-bottom: ${spacing.sm}px;
 `;
 
 const TemporaryPwBox = styled.div`
@@ -309,12 +295,13 @@ const TemporaryPwBox = styled.div`
   border-radius: 12px;
   font-size: 1.1rem;
   font-weight: 600;
-  border: 1px solid rgba(0,0,0,0.05);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  margin: 16px 0;
 `;
 
 const SmallHint = styled.div`
   font-size: 12px;
   color: ${colors.textMuted};
   text-align: center;
-  margin: ${spacing.sm}px 0 ${spacing.lg}px;
+  margin-bottom: ${spacing.lg}px;
 `;
