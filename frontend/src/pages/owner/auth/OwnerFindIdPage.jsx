@@ -1,4 +1,3 @@
-// src/pages/owner/auth/OwnerFindIdPage.jsx
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -11,12 +10,13 @@ import PageContainer from "../../../design/layout/PageContainer";
 import {
   Input,
   PrimaryButton,
-  GhostButton,
   SubtleButton,
   SectionCard,
   Hero,
   Spacer,
-  Divider
+  Divider,
+  ErrorBox,
+  SuccessBox,
 } from "../../../design/components";
 
 import styled from "styled-components";
@@ -59,13 +59,12 @@ export default function OwnerFindIdPage() {
   const formatPhone = (v) => v.replace(/\D/g, "");
 
   // ------------------------------------------------------------
-  // Handlers
   const handleSendCode = async () => {
     setError("");
-    const phone = formatPhone(phoneNumber);
 
+    const phone = formatPhone(phoneNumber);
     if (phone.length !== 11) {
-      setError("올바른 전화번호를 입력해주세요.");
+      setError("올바른 전화번호 11자리를 입력해주세요.");
       return;
     }
 
@@ -76,23 +75,28 @@ export default function OwnerFindIdPage() {
       });
 
       if (!res.data.success) {
-        setError(res.data.message);
+        setError(res.data.message || "인증번호 발송에 실패했습니다.");
         return;
       }
 
       setVerificationCode("");
       setTimer(180);
       setIsVerificationSent(true);
-
-    } catch {
-      setError("인증번호 발송 중 오류가 발생했습니다.");
+    } catch (err) {
+      const serverMsg =
+        err?.response?.data?.message ||
+        "인증번호 발송 중 오류가 발생했습니다.";
+      setError(serverMsg);
     } finally {
       setIsLoading(false);
     }
   };
 
+  // ------------------------------------------------------------
   const handleVerifyCode = async () => {
     setIsLoading(true);
+    setError("");
+
     try {
       const res = await api.post("/accounts/phone-verify/", {
         phone_number: formatPhone(phoneNumber),
@@ -100,19 +104,24 @@ export default function OwnerFindIdPage() {
       });
 
       if (!res.data.success) {
-        setError(res.data.message);
+        setError(res.data.message || "인증번호가 올바르지 않습니다.");
         return;
       }
 
       setIsPhoneVerified(true);
-
-    } catch {
-      setError("인증번호 확인 중 오류가 발생했습니다.");
+    } catch (err) {
+      const serverMsg =
+        err?.response?.data?.message ||
+        "인증번호 확인 중 오류가 발생했습니다.";
+      setError(serverMsg);
     } finally {
       setIsLoading(false);
     }
   };
 
+
+  // ------------------------------------------------------------
+  // Find Username
   const handleFindUsername = async () => {
     setError("");
     setIsLoading(true);
@@ -130,7 +139,6 @@ export default function OwnerFindIdPage() {
 
       setFoundUsername(res.data.data.username);
       setShowResult(true);
-
     } catch {
       setError("아이디 찾기 중 오류가 발생했습니다.");
     } finally {
@@ -146,10 +154,12 @@ export default function OwnerFindIdPage() {
     return (
       <MobileShell>
         <PageContainer>
-          <Hero />
+          <Hero title="아이디 찾기 결과" />
 
-          <SectionCard title="아이디 찾기 결과">
+          <SectionCard>
             <ResultEmoji>🎉</ResultEmoji>
+            <SuccessBox>가입된 아이디를 찾았습니다!</SuccessBox>
+
             <FoundIdBox>{foundUsername}</FoundIdBox>
 
             <PrimaryButton onClick={() => navigate("/login")}>
@@ -172,7 +182,6 @@ export default function OwnerFindIdPage() {
   return (
     <MobileShell>
       <PageContainer>
-
         <Hero title="아이디 찾기" />
 
         <SectionCard title="본인 확인">
@@ -209,14 +218,12 @@ export default function OwnerFindIdPage() {
                 onClick={handleVerifyCode}
                 disabled={isLoading || verificationCode.length !== 6}
               >
-                인증 확인
+                {isLoading ? "확인 중..." : "인증 확인"}
               </PrimaryButton>
             </>
           )}
 
-          {isPhoneVerified && (
-            <VerifiedText>✓ 번호 인증 완료</VerifiedText>
-          )}
+          {isPhoneVerified && <SuccessBox>✓ 번호 인증 완료</SuccessBox>}
 
           <Divider />
 
@@ -230,7 +237,7 @@ export default function OwnerFindIdPage() {
             />
           )}
 
-          {error && <ErrorBox>⚠️ {error}</ErrorBox>}
+          {error && <ErrorBox>{error}</ErrorBox>}
 
           {isPhoneVerified && (
             <PrimaryButton
@@ -247,7 +254,6 @@ export default function OwnerFindIdPage() {
         <SubtleButton onClick={() => navigate("/login")}>
           ← 로그인으로 돌아가기
         </SubtleButton>
-
       </PageContainer>
     </MobileShell>
   );
@@ -255,33 +261,19 @@ export default function OwnerFindIdPage() {
 
 /* ----------------------------- Styles ----------------------------- */
 
-const VerifiedText = styled.div`
-  color: ${colors.success};
-  margin-top: ${spacing.xs}px;
-  font-size: 14px;
-`;
-
-const ErrorBox = styled.div`
-  width: 100%;
-  background: ${colors.errorLight};
-  color: ${colors.error};
-  padding: ${spacing.md}px;
-  border-radius: 8px;
-  font-size: 14px;
-`;
-
 const ResultEmoji = styled.div`
   font-size: 3rem;
   text-align: center;
+  margin-bottom: 16px;
 `;
 
 const FoundIdBox = styled.div`
   background: ${colors.bgPaper};
   padding: ${spacing.lg}px;
+  margin: 16px 0;
   text-align: center;
   border-radius: 12px;
   font-size: 1.2rem;
   font-weight: 600;
-  border: 1px solid rgba(0,0,0,0.05);
+  border: 1px solid rgba(0, 0, 0, 0.05);
 `;
-
