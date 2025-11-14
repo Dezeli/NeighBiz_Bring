@@ -1,8 +1,9 @@
+
 from django.urls import path
-from .views import CouponPolicyCreateView, CouponIssueView, CouponUseView
+from coupons.views import *
 
 urlpatterns = [
-    path("coupon-policies/", CouponPolicyCreateView.as_view(), name="coupon-policy-create"),
-    path("issue/<slug:slug>/", CouponIssueView.as_view(), name="coupon-issue"),
-    path("use/<int:coupon_id>/", CouponUseView.as_view(), name="coupon-use"),
+    path("policy/", CouponPolicyView.as_view(), name="coupon-policy"),
+    path("issue/", CouponIssueView.as_view(), name="coupon-issue"),
+    path("use/", CouponUseView.as_view(), name="coupon-issue"),
 ]

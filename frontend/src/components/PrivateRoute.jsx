@@ -1,7 +1,11 @@
-import React from 'react';
-import { Navigate } from 'react-router-dom';
+import React from "react";
+import { Navigate, useLocation } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 const PrivateRoute = ({ isAuthenticated, loading, children }) => {
+  const { user } = useAuth(); // AuthContext에서 불러옴
+  const location = useLocation();
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
@@ -15,6 +19,12 @@ const PrivateRoute = ({ isAuthenticated, loading, children }) => {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (user?.role === "owner" && !user?.profile?.is_verified) {
+    if (location.pathname !== "/owner/verify") {
+      return <Navigate to="/owner/verify" replace />;
+    }
   }
 
   return <>{children}</>;

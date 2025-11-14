@@ -12,7 +12,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await tokenManager.makeAuthenticatedRequest({
         method: 'GET',
-        url: '/auth/me',
+        url: '/accounts/me/',
       });
 
       if (response.success && response.data) {
@@ -56,7 +56,7 @@ export const AuthProvider = ({ children }) => {
         try {
           await tokenManager.makeAuthenticatedRequest({
             method: 'POST',
-            url: '/auth/logout',
+            url: '/accounts/logout/',
             data: { refresh: refreshToken },
           });
         } catch (e) {
@@ -85,12 +85,13 @@ export const AuthProvider = ({ children }) => {
     user,
     role: user?.role || null,
     isAuthenticated: !!user,
-    isGuest: user?.role === 'guest',
+    isGuest: user?.role === 'consumer',
     isOwner: user?.role === 'owner',
     loading,
     login,
     logout,
     apiCall,
+    fetchUser,
   };
 
   return (

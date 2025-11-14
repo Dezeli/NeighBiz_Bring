@@ -1,360 +1,174 @@
-from rest_framework.generics import ListAPIView
-from .models import Post, Proposal, Partnership
-from .serializers import PostListSerializer
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from coupons.models import CouponPolicy
-from utils.response import success, failure
-from merchants.models import Merchant
-from django.db import transaction
-from django.utils import timezone
-from django.db.models import Q
+from common.enums import ProposalStatus
+from common.s3 import generate_presigned_url
+from common.response import success, failure
+from .models import Proposal
+from .serializers import *
+import qrcode
+import io
+import boto3
 
-class PostListView(ListAPIView):
-    queryset = Post.objects.filter(deleted_at__isnull=True).order_by("-created_at")
-    serializer_class = PostListSerializer
+
+class ProposalCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
+    def post(self, request):
+        serializer = ProposalCreateSerializer(data=request.data, context={"request": request})
+        if serializer.is_valid():
+            proposal = serializer.save()
+            return Response(success(data={"proposal_id": proposal.id}, message="제휴 요청 전송에 성공했습니다."))
+        return Response(failure(message="제휴 요청 전송에 실패했습니다.", data=serializer.errors))
 
-class PostDetailView(APIView):
+
+class ProposalCancelView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, post_id):
+    def post(self, request):
+        serializer = ProposalCancelSerializer(data=request.data, context={"request": request})
+        if not serializer.is_valid():
+            return Response(failure(message="제휴 제안 취소에 실패했습니다.", data=serializer.errors), status=400)
+
+        proposal = serializer.validated_data["proposal"]
+        proposal.status = ProposalStatus.CANCELLED.value
+        proposal.save()
+
+        return Response(success(message="제휴 제안이 취소되었습니다."))
+
+
+class ProposalActionView(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self, request, pk):
         try:
-            post = Post.objects.select_related("author_merchant").get(
-                id=post_id, deleted_at__isnull=True
-            )
-        except Post.DoesNotExist:
-            return Response(failure(message="게시글을 찾을 수 없습니다.", error_code="POST_NOT_FOUND"), status=404)
+            proposal = Proposal.objects.get(pk=pk)
+        except Proposal.DoesNotExist:
+            return Response(failure("해당 제안이 존재하지 않습니다."), status=404)
 
-        merchant = post.author_merchant
+        serializer = ProposalActionSerializer(data=request.data, context={"proposal": proposal})
+
+        if not serializer.is_valid():
+            return Response(failure("유효하지 않은 선택입니다.", serializer.errors), status=400)
 
         try:
-            policy = CouponPolicy.objects.get(merchant=merchant, deleted_at__isnull=True)
-        except CouponPolicy.DoesNotExist:
-            policy = None
+            message = serializer.perform_action()
+        except serializers.ValidationError as e:
+            error_detail = e.detail
+            if isinstance(error_detail, list):
+                error_message = error_detail[0]
+            elif isinstance(error_detail, dict):
+                error_message = next(iter(error_detail.values()))[0]
+            else:
+                error_message = str(error_detail)
+            
+            return Response(failure(message=error_message), status=400)
 
-        return Response(success(data={
-            "post": {
-                "id": post.id,
-                "title": post.title,
-                "description": post.description,
-                "expected_value": post.expected_value,
-                "expected_duration": post.expected_duration,
-                "status": post.status,
-                "created_at": post.created_at
-            },
-            "author_merchant": {
-                "id": merchant.id,
-                "name": merchant.name,
-                "category": merchant.category,
-                "address": merchant.address,
-                "image_url": merchant.image_url,
-                "description": merchant.description
-            },
-            "coupon_policy": {
-                "description": policy.description if policy else None,
-                "daily_limit": policy.daily_limit if policy else None,
-                "total_limit": policy.total_limit if policy else None,
-                "valid_from": policy.valid_from if policy else None,
-                "valid_until": policy.valid_until if policy else None
-            }
-        }))
+        return Response(success(message=message))
 
-class SendProposalView(APIView):
+
+class QRCodeView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, post_id):
+    def get(self, request):
         user = request.user
-        if getattr(user, "role", None) != "owner":
-            return Response(failure(message="사장님만 접근할 수 있습니다.", error_code="FORBIDDEN"), status=403)
 
+        # 사장님 → 가게
         try:
-            my_merchant = Merchant.objects.get(user=user, deleted_at__isnull=True)
-        except Merchant.DoesNotExist:
-            return Response(failure(message="가맹점 정보를 찾을 수 없습니다.", error_code="MERCHANT_NOT_FOUND"), status=404)
+            store = Store.objects.get(owner=user)
+        except Store.DoesNotExist:
+            return Response(
+                failure(message="가게 정보가 존재하지 않습니다."),
+                status=404,
+            )
 
-        try:
-            post = Post.objects.select_related("author_merchant").get(id=post_id, deleted_at__isnull=True)
-        except Post.DoesNotExist:
-            return Response(failure(message="게시글을 찾을 수 없습니다.", error_code="POST_NOT_FOUND"), status=404)
+        # 내 가게가 참여한 활성 파트너쉽 조회
+        partnership = Partnership.objects.filter(
+            status="active"
+        ).filter(
+            models.Q(store_a=store) | models.Q(store_b=store)
+        ).first()
 
-        # 본인 게시글이면 막기
-        if post.author_merchant == my_merchant:
-            return Response(failure(message="본인의 게시글에는 제안을 보낼 수 없습니다.", error_code="INVALID_ACTION"), status=400)
+        if not partnership:
+            return Response(
+                failure(message="활성화된 제휴가 없습니다."),
+                status=404
+            )
 
-        # 이미 제안한 기록이 있는지 확인
-        existing = Proposal.objects.filter(post=post, proposer_merchant=my_merchant, deleted_at__isnull=True).first()
-        if existing:
-            return Response(failure(message="이미 제안을 보낸 게시글입니다.", error_code="ALREADY_PROPOSED"), status=400)
+        # 가게 기준으로 slug 선택
+        if store == partnership.store_a:
+            slug = partnership.slug_for_a
+        else:
+            slug = partnership.slug_for_b
 
-        # 내 쿠폰 정책이 있어야 제안 가능
-        try:
-            my_policy = CouponPolicy.objects.get(merchant=my_merchant, deleted_at__isnull=True)
-        except CouponPolicy.DoesNotExist:
-            return Response(failure(message="쿠폰 정책이 필요합니다.", error_code="POLICY_NOT_FOUND"), status=400)
-
-        # Proposal 생성
-        proposal = Proposal.objects.create(
-            post=post,
-            proposer_merchant=my_merchant,
-            policy=my_policy,
-            description=my_policy.description,
-            offered_value=post.expected_value,
-            status="pending",
-            created_at=timezone.now()
+        # S3 Key
+        bucket_name = settings.AWS_S3_BUCKET
+        key = f"qrcodes/{slug}.png"
+        s3_client = boto3.client(
+            "s3",
+            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+            region_name=settings.AWS_REGION,
         )
 
-        return Response(success(data={
-            "proposal_id": proposal.id,
-            "status": proposal.status
-        }, message="제휴 요청이 성공적으로 전송되었습니다."))
+        # 존재 여부 확인
+        try:
+            s3_client.head_object(Bucket=bucket_name, Key=key)
+            exists = True
+        except s3_client.exceptions.ClientError:
+            exists = False
+
+        # 없으면 생성 후 업로드
+        if not exists:
+            qr_img = qrcode.make(f"{settings.APP_BASE_URL}/issue/{slug}")
+            buffer = io.BytesIO()
+            qr_img.save(buffer, format="PNG")
+            buffer.seek(0)
+
+            s3_client.upload_fileobj(
+                buffer,
+                bucket_name,
+                key,
+                ExtraArgs={"ContentType": "image/png"}
+            )
+
+        # presigned URL
+        qr_url = generate_presigned_url(key)
+
+        serializer = QRCodeSerializer({
+            "partnership_id": partnership.id,
+            "slug": slug,
+            "qr_code_url": qr_url
+        })
+
+        return Response(success(data=serializer.data, message="QR 이미지 조회 성공"))
 
 
-class ReceivedProposalsView(APIView):
+class MyProposalsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        user = request.user
-        if getattr(user, "role", None) != "owner":
-            return Response(failure(message="사장님만 접근할 수 있습니다.", error_code="FORBIDDEN"), status=403)
+        store = request.user.store
+        sent = Proposal.objects.filter(proposer_store=store)
+        received = Proposal.objects.filter(recipient_store=store)
 
-        try:
-            my_merchant = Merchant.objects.get(user=user, deleted_at__isnull=True)
-        except Merchant.DoesNotExist:
-            return Response(failure(message="가맹점 정보를 찾을 수 없습니다.", error_code="MERCHANT_NOT_FOUND"), status=404)
-
-        # 내가 작성한 게시글
-        my_posts = Post.objects.filter(author_merchant=my_merchant, deleted_at__isnull=True)
-
-        # 내 게시글에 들어온 제안
-        proposals = Proposal.objects.filter(
-            post__in=my_posts,
-            deleted_at__isnull=True
-        ).select_related("post", "proposer_merchant", "policy").order_by("-created_at")
-
-        # 직렬화 없이 수동 구성
-        results = []
-        for p in proposals:
-            results.append({
-                "proposal_id": p.id,
-                "status": p.status,
-                "created_at": p.created_at,
-                "post": {
-                    "id": p.post.id,
-                    "title": p.post.title,
-                    "expected_value": p.post.expected_value,
-                },
-                "proposer_merchant": {
-                    "id": p.proposer_merchant.id,
-                    "name": p.proposer_merchant.name,
-                    "category": p.proposer_merchant.category,
-                    "address": p.proposer_merchant.address,
-                    "image_url": p.proposer_merchant.image_url,
-                },
-                "coupon_policy": {
-                    "description": p.policy.description,
-                    "daily_limit": p.policy.daily_limit,
-                    "total_limit": p.policy.total_limit,
-                    "valid_from": p.policy.valid_from,
-                    "valid_until": p.policy.valid_until,
+        data = {
+            "sent": [
+                {
+                    "id": p.id,
+                    "recipient_store": p.recipient_store.name,
+                    "status": p.status,
+                    "created_at": p.created_at,
                 }
-            })
-
-        return Response(success(data=results, message="받은 제안 목록을 불러왔습니다."))
-    
-
-class SentProposalsView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        user = request.user
-        if getattr(user, "role", None) != "owner":
-            return Response(failure(message="사장님만 접근할 수 있습니다.", error_code="FORBIDDEN"), status=403)
-
-        try:
-            my_merchant = Merchant.objects.get(user=user, deleted_at__isnull=True)
-        except Merchant.DoesNotExist:
-            return Response(failure(message="가맹점 정보를 찾을 수 없습니다.", error_code="MERCHANT_NOT_FOUND"), status=404)
-
-        # 내가 보낸 제안
-        proposals = Proposal.objects.filter(
-            proposer_merchant=my_merchant,
-            deleted_at__isnull=True
-        ).select_related("post", "post__author_merchant", "policy").order_by("-created_at")
-
-        results = []
-        for p in proposals:
-            post_author = p.post.author_merchant
-            results.append({
-                "proposal_id": p.id,
-                "status": p.status,
-                "created_at": p.created_at,
-                "target_post": {
-                    "id": p.post.id,
-                    "title": p.post.title,
-                    "expected_value": p.post.expected_value,
-                },
-                "target_merchant": {
-                    "id": post_author.id,
-                    "name": post_author.name,
-                    "category": post_author.category,
-                    "address": post_author.address,
-                    "image_url": post_author.image_url,
-                },
-                "my_coupon_policy": {
-                    "description": p.policy.description,
-                    "daily_limit": p.policy.daily_limit,
-                    "total_limit": p.policy.total_limit,
-                    "valid_from": p.policy.valid_from,
-                    "valid_until": p.policy.valid_until,
+                for p in sent
+            ],
+            "received": [
+                {
+                    "id": p.id,
+                    "proposer_store": p.proposer_store.name,
+                    "status": p.status,
+                    "created_at": p.created_at,
                 }
-            })
-
-        return Response(success(data=results, message="보낸 제안 목록을 불러왔습니다."))
-    
-
-
-class RespondToProposalView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request, proposal_id):
-        user = request.user
-        if getattr(user, "role", None) != "owner":
-            return Response(failure(message="사장님만 접근할 수 있습니다.", error_code="FORBIDDEN"), status=403)
-
-        action = request.data.get("action")  # "accept" or "reject"
-        if action not in ["accept", "reject"]:
-            return Response(failure(message="action 값은 'accept' 또는 'reject'여야 합니다.", error_code="INVALID_ACTION"), status=400)
-
-        # 내 가맹점
-        try:
-            my_merchant = Merchant.objects.get(user=user, deleted_at__isnull=True)
-        except Merchant.DoesNotExist:
-            return Response(failure(message="가맹점 정보를 찾을 수 없습니다.", error_code="MERCHANT_NOT_FOUND"), status=404)
-
-        # 제안서
-        try:
-            proposal = (
-                Proposal.objects
-                .select_related("post", "proposer_merchant", "policy")
-                .get(id=proposal_id, deleted_at__isnull=True)
-            )
-        except Proposal.DoesNotExist:
-            return Response(failure(message="제안서를 찾을 수 없습니다.", error_code="PROPOSAL_NOT_FOUND"), status=404)
-
-        # 내 글에 온 제안만 처리 가능
-        if proposal.post.author_merchant != my_merchant:
-            return Response(failure(message="본인의 게시글에 대한 제안만 수락/거절할 수 있습니다.", error_code="FORBIDDEN"), status=403)
-
-        # 이미 처리됨 방지
-        if proposal.status in ["accepted", "rejected"]:
-            return Response(failure(message="이미 처리된 제안입니다.", error_code="ALREADY_HANDLED"), status=400)
-
-        if action == "reject":
-            proposal.status = "rejected"
-            proposal.save()
-            return Response(success(message="제안을 거절했습니다."))
-
-        # ===== 수락 처리 (원자적) =====
-        with transaction.atomic():
-            # 1) 정책잠금 (각 1개 전제)
-            try:
-                policy_a = CouponPolicy.objects.select_for_update().get(
-                    merchant=my_merchant, deleted_at__isnull=True
-                )
-            except CouponPolicy.DoesNotExist:
-                return Response(failure(message="정책 정보를 찾을 수 없습니다.", error_code="POLICY_NOT_FOUND"), status=404)
-
-            policy_b = proposal.policy
-            if policy_b is None or policy_b.deleted_at is not None:
-                return Response(failure(message="제안자의 정책 정보를 찾을 수 없습니다.", error_code="PROPOSER_POLICY_NOT_FOUND"), status=404)
-
-            # 2) 게시글잠금 (각 1개 전제) — 내 글은 proposal.post로 이미 보유
-            # 작성자(나) 글
-            author_post = (
-                Post.objects.select_for_update()
-                .get(id=proposal.post.id, deleted_at__isnull=True)
-            )
-            # 제안자 글 (정확히 1개 존재 보장)
-            try:
-                proposer_post = (
-                    Post.objects.select_for_update()
-                    .get(author_merchant=proposal.proposer_merchant, deleted_at__isnull=True)
-                )
-            except Post.DoesNotExist:
-                return Response(failure(message="제안자 게시글이 존재하지 않습니다.", error_code="PROPOSER_POST_NOT_FOUND"), status=404)
-
-            # 3) 상태 가드: 둘 다 open이어야 수락 가능(운영정책에 맞게 조정)
-            if author_post.status != "open":
-                return Response(failure(message="작성자 게시글이 수락 가능한 상태가 아닙니다.", error_code="AUTHOR_POST_NOT_OPEN"), status=409)
-            if proposer_post.status != "open":
-                return Response(failure(message="제안자 게시글이 수락 가능한 상태가 아닙니다.", error_code="PROPOSER_POST_NOT_OPEN"), status=409)
-
-            # (선택) 한 가게당 1개의 active 제휴 정책 가드
-            if Partnership.objects.filter(
-                status="active", deleted_at__isnull=True
-            ).filter(
-                Q(merchant_a=my_merchant) | Q(merchant_b=my_merchant) |
-                Q(merchant_a=proposal.proposer_merchant) | Q(merchant_b=proposal.proposer_merchant)
-            ).exists():
-                return Response(failure(message="이미 활성 제휴가 존재합니다.", error_code="ACTIVE_PARTNERSHIP_EXISTS"), status=409)
-
-            # 4) Partnership 생성
-            partnership = Partnership.objects.create(
-                merchant_a=my_merchant,
-                merchant_b=proposal.proposer_merchant,
-                post=author_post,        # 내 게시글 참조
-                proposal=proposal,
-                start_date=timezone.now().date(),
-                status="active",
-            )
-
-            # 5) 정책 양쪽 연결
-            policy_a.partnership = partnership
-            policy_b.partnership = partnership
-            policy_a.save()
-            policy_b.save()
-
-            # 6) 제안 상태 업데이트
-            proposal.status = "accepted"
-            proposal.save()
-
-            # 7) 게시글 상태를 양쪽 모두 'matched'로
-            author_post.status = "matched"
-            proposer_post.status = "matched"
-            author_post.save()
-            proposer_post.save()
-
-        return Response(success(message="제안을 수락하고 제휴를 생성했으며, 양측 게시글을 제휴 완료로 변경했습니다."))
-
-
-class OwnerPartnershipStatusCheckView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        user = request.user
-        if getattr(user, "role", None) != "owner":
-            return Response(failure(message="사장님만 접근할 수 있습니다.", error_code="FORBIDDEN"), status=403)
-
-        try:
-            merchant = Merchant.objects.get(user=user, deleted_at__isnull=True)
-        except Merchant.DoesNotExist:
-            return Response(failure(message="가맹점 정보를 찾을 수 없습니다.", error_code="MERCHANT_NOT_FOUND"), status=404)
-
-        has_policy = CouponPolicy.objects.filter(merchant=merchant, deleted_at__isnull=True).exists()
-        has_received = Proposal.objects.filter(post__author_merchant=merchant, deleted_at__isnull=True, status="pending").exists()
-        has_sent = Proposal.objects.filter(proposer_merchant=merchant, deleted_at__isnull=True, status="pending").exists()
-        has_partnership = Partnership.objects.filter(
-            Q(merchant_a=merchant) | Q(merchant_b=merchant),
-            deleted_at__isnull=True,
-            status="active"
-        ).exists()
-
-        return Response(success(data={
-            "has_coupon_policy": has_policy,
-            "has_received_proposal": has_received,
-            "has_sent_proposal": has_sent,
-            "has_active_partnership": has_partnership
-        }, message="현재 사장님의 제휴 관련 상태입니다."))
+                for p in received
+            ],
+        }
+        return Response(success(data=data, message="내 제안 목록 조회 성공"))

@@ -4,6 +4,7 @@ from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 APP_BASE_URL = config("APP_BASE_URL", "http://127.0.0.1:8000")
+ADMIN_APPROVE_PASSWORD = config("ADMIN_APPROVE_PASSWORD", "1234567")
 
 # SECURITY
 SECRET_KEY = config("DJANGO_SECRET_KEY")
@@ -18,26 +19,26 @@ DJANGO_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    'django_filters',
 ]
 
 THIRD_PARTY_APPS = [
     "rest_framework",
     "rest_framework_simplejwt",
-    "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
 ]
 
 LOCAL_APPS = [
     "accounts",
-    "merchants",
+    "stores",
     "partnerships",
     "coupons",
-    "events",
+    "upload",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
-AUTH_USER_MODEL = "accounts.User"
+AUTH_USER_MODEL = "accounts.OwnerUser"
 
 # MIDDLEWARE
 MIDDLEWARE = [
@@ -93,16 +94,20 @@ AUTH_PASSWORD_VALIDATORS = [
 # REST FRAMEWORK
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "config.auth.CustomJWTAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.AllowAny",
     ),
-    "EXCEPTION_HANDLER": "utils.exceptions.custom_exception_handler",
+    "EXCEPTION_HANDLER": "common.exceptions.custom_exception_handler",
     "DEFAULT_THROTTLE_CLASSES": [],
     "DEFAULT_THROTTLE_RATES": {
         "daily_phone": "10/day",
     },
+    
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 10,
+    "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
 }
 
 # STATIC/MEDIA
@@ -140,6 +145,7 @@ SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
     "ROTATE_REFRESH_TOKENS": False,
-    "BLACKLIST_AFTER_ROTATION": True,
+    "USER_ID_CLAIM": "user_id",
+    "BLACKLIST_AFTER_ROTATION": False,
     "AUTH_HEADER_TYPES": ("Bearer",),
 }

@@ -1,13 +1,19 @@
 from django.urls import path
-from accounts.views import *
+from .views import *
 
 urlpatterns = [
-    path("auth/request-code", RequestCodeView.as_view(), name="request-code"),
-    path('auth/verify-code', VerifyCodeView.as_view(), name='verify-code'),
-    path("auth/me", MeView.as_view()),
-    path("auth/refresh", CustomTokenRefreshView.as_view(), name="token_refresh"),
-    path("auth/logout", LogoutView.as_view()),
-    path("auth/owner/signup", OwnerSignupView.as_view(), name="owner-signup"),
-    path("auth/owner/login", OwnerLoginView.as_view(), name="owner-login"),
-
+    path("phone-verify-request/", RequestCodeView.as_view(), name="phone-verify-request"),
+    path("phone-verify/", VerifyCodeView.as_view(), name="phone-verify"),
+    path("owner-signup/", OwnerSignupView.as_view(), name="owner-signup"),
+    path("owner-login/", OwnerLoginView.as_view(), name="owner-login"),
+    path("refresh/", RefreshTokenView.as_view(), name="refresh-token"),
+    path("logout/", LogoutView.as_view(), name="logout"),
+    path("find-username/", FindUsernameView.as_view(), name="find-username"),
+    path("reset-password/", ResetPasswordView.as_view(), name="reset-password"),
+    path("change-password/", ChangePasswordView.as_view(), name="change-password"),
+    path("verify-owner/", OwnerVerifyView.as_view(), name="verify-owner"),
+    path("owner-license/", OwnerLicenseImageUpdateView.as_view()),
+    path("owner-profile/", OwnerProfileView.as_view()),
+    path("consumer-login/", ConsumerLoginView.as_view(), name="consumer-login"),
+    path("me/", MeView.as_view(), name="me"),
 ]
