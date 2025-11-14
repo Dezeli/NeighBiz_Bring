@@ -321,3 +321,39 @@ class MeView(APIView):
             ),
             status=status.HTTP_200_OK
         )
+
+
+class CheckUsernameView(APIView):
+    permission_classes = []  # 토큰 불필요
+
+    def post(self, request):
+        serializer = CheckUsernameSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(
+                failure(
+                    message="입력값이 유효하지 않습니다.",
+                    data=serializer.errors,
+                    error_code="INVALID_REQUEST"
+                ),
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        username = serializer.validated_data["username"]
+        exists = OwnerUser.objects.filter(username=username).exists()
+
+        if exists:
+            return Response(
+                success(
+                    message="이미 사용 중인 아이디입니다.",
+                    data={"available": False},
+                ),
+                status=status.HTTP_200_OK
+            )
+        return Response(
+            success(
+                message="사용 가능한 아이디입니다.",
+                data={"available": True},
+            ),
+            status=status.HTTP_200_OK
+        )
