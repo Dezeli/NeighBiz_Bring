@@ -396,7 +396,7 @@ const CouponSetupPage = () => {
       if (response?.success) {
         setSuccess('쿠폰 정책이 성공적으로 등록되었습니다!');
         setTimeout(() => {
-          navigate('/owner/mypage');
+          navigate('/owner/profile');
         }, 2000);
       } else {
         setError(response?.message || '쿠폰 정책 등록에 실패했습니다.');
@@ -440,7 +440,7 @@ const CouponSetupPage = () => {
     <Container>
       <ContentWrapper>
         <Header>
-          <BackButton onClick={() => navigate('/owner/mypage')}>
+          <BackButton onClick={() => navigate('/owner/profile')}>
             ← 마이페이지로 돌아가기
           </BackButton>
 
