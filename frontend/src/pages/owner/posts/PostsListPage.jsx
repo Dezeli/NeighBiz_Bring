@@ -370,6 +370,7 @@ const PostsListPage = () => {
                     label="최소 가격"
                     type="number"
                     step="500"
+                    unit="원"
                     value={filters.expected_value_min}
                     placeholder="500"
                     onChange={(e) =>
@@ -387,6 +388,7 @@ const PostsListPage = () => {
                     label="최대 가격"
                     type="number"
                     step="500"
+                    unit="원"
                     value={filters.expected_value_max}
                     placeholder="5000"
                     onChange={(e) =>
@@ -404,6 +406,7 @@ const PostsListPage = () => {
                     label="최소 월한도"
                     type="number"
                     step="10"
+                    unit="매"
                     value={filters.monthly_limit_min}
                     placeholder="10"
                     onChange={(e) =>
@@ -421,6 +424,7 @@ const PostsListPage = () => {
                     label="최대 월한도"
                     type="number"
                     step="10"
+                    unit="매"
                     value={filters.monthly_limit_max}
                     placeholder="500"
                     onChange={(e) =>
@@ -524,10 +528,12 @@ const PostsListPage = () => {
                     <RowHeader>
                       <StoreInfo>
                         <StoreName>{post.store_name}</StoreName>
-                        <StoreMeta>
-                          {getCategoryName(post.category)} • {post.owner_name} •{" "}
-                          {formatDate(post.updated_at)}
-                        </StoreMeta>
+                        <StoreMetaWrapper>
+                          <MetaLine>
+                            {getCategoryName(post.category)} • {post.owner_name}
+                          </MetaLine>
+                          <MetaDate>{formatDate(post.updated_at)}</MetaDate>
+                        </StoreMetaWrapper>
                       </StoreInfo>
 
                       <StatusBadge
@@ -786,3 +792,18 @@ const Ellipsis = styled.div`
   color: ${colors.textSecondary};
 `;
 
+const StoreMetaWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+`;
+
+const MetaLine = styled.div`
+  font-size: 13px;
+  color: #6b7280; /* text-muted */
+`;
+
+const MetaDate = styled.div`
+  font-size: 12px;
+  color: #9ca3af; /* 더 흐린 텍스트 */
+`;

@@ -27,8 +27,9 @@ const InputContainer = styled.div`
 const InputBox = styled.input`
   width: 100%;
   padding: ${spacing.md}px;
+
   padding-right: ${(props) =>
-    props.isPassword ? spacing.xl + 4 : spacing.md}px;
+    props.hasUnit ? "12px" : spacing.md}px;
 
   border-radius: ${radius.sm}px;
   border: 1.5px solid
@@ -68,12 +69,23 @@ const IconButton = styled.button`
   color: ${colors.gray500};
 `;
 
+const Unit = styled.span`
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: ${typography.small.size};  /* 기존 body → small 로 축소 */
+  color: ${colors.textSecondary};
+  opacity: 0.85;                       /* 살짝 연하게 */
+  pointer-events: none;                /* 클릭 방해 없음 */
+`;
+
 const ErrorText = styled.span`
   font-size: ${typography.small.size};
   color: ${colors.error};
 `;
 
-export default function Input({ label, error, type = "text", ...props }) {
+export default function Input({ label, error, type = "text", unit, ...props }) {
   const id = useId();
   const [showPassword, setShowPassword] = useState(false);
 
@@ -90,14 +102,19 @@ export default function Input({ label, error, type = "text", ...props }) {
           error={error}
           type={displayType}
           isPassword={isPassword}
+          hasUnit={!!unit}
           {...props}
         />
 
+        {/* 패스워드 토글 */}
         {isPassword && (
           <IconButton type="button" onClick={() => setShowPassword((v) => !v)}>
             {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
           </IconButton>
         )}
+
+        {/* 단위 표시 */}
+        {!isPassword && unit && <Unit>{unit}</Unit>}
       </InputContainer>
 
       {error && <ErrorText>{error}</ErrorText>}

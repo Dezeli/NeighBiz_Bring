@@ -95,12 +95,11 @@ const OwnerProfilePage = () => {
 
   const formatDuration = (duration) => {
     const durationMap = {
-      day: "1일",
-      week: "1주일",
       "1_month": "1개월",
+      "2_months": "2개월",
       "3_months": "3개월",
       "6_months": "6개월",
-      unlimited: "무기한",
+      "1_year": "1년",
     };
     return durationMap[duration] || duration;
   };
@@ -277,8 +276,7 @@ const OwnerProfilePage = () => {
         </SectionCard>
 
         {/* 2) 쿠폰 정책 */}
-        <SectionCard>
-          <Spacer size="lg" />
+        <SectionCard title="쿠폰 정책">
           {couponPolicy ? (
             <>
               <PolicyGrid>

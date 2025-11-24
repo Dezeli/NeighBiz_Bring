@@ -13,6 +13,9 @@ export { ClickableCard, SectionCard, SoftSectionCard } from "./Card";
 // Input
 export { default as Input } from "./Input";
 
+// Textarea
+export { default as Textarea } from "./Textarea";
+
 // Select
 export { default as Select } from "./Select";
 

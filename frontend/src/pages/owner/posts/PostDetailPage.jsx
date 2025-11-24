@@ -64,7 +64,7 @@ export default function PostDetailPage() {
 
   const formatPrice = (price) => Number(price).toLocaleString("ko-KR");
   const formatDuration = (d) =>
-    ({ "1_month": "1개월", "3_months": "3개월", "6_months": "6개월", unlimited: "무기한" }[d] || d);
+    ({ "1_month": "1개월", "2_months": "2개월", "3_months": "3개월", "6_months": "6개월", "1_year": "1년" }[d] || d);
   const formatDate = (dateStr) =>
     new Date(dateStr).toLocaleDateString("ko-KR", {
       year: "numeric",
