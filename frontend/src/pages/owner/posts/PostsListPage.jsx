@@ -19,7 +19,6 @@ import {
   Hero,
   Row,
   Col,
-  Divider,
   ClickableCard,
   StatusBadge,
   Select,
@@ -544,8 +543,6 @@ const PostsListPage = () => {
                       />
 
                     </RowHeader>
-
-                    <Divider />
 
                     <PostGrid>
                       <InfoBox>

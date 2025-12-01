@@ -106,31 +106,28 @@ class CouponIssueView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # ConsumerUser 확인
         if not isinstance(request.user, ConsumerUser):
             return Response(
                 failure(message="소비자 계정만 쿠폰을 발급받을 수 있습니다."),
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        # 1. partnership 찾기
         partnership = Partnership.objects.filter(
             models.Q(slug_for_a=slug) | models.Q(slug_for_b=slug),
             status="active",
         ).first()
+
         if not partnership:
             return Response(
                 failure(message="유효하지 않은 제휴입니다."),
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        # 2. 발급 대상 store 결정
         if slug == partnership.slug_for_a:
             target_store = partnership.store_b
         else:
             target_store = partnership.store_a
 
-        # 3. 대상 store의 쿠폰 정책
         policy = CouponPolicy.objects.filter(store=target_store, is_active=True).first()
         if not policy:
             return Response(
@@ -140,25 +137,27 @@ class CouponIssueView(APIView):
 
         today = timezone.now().date()
 
-        # 4. 오늘 이미 발급된 쿠폰 확인 (같은 partnership 내)
         existing_coupon = Coupon.objects.filter(
             user=request.user,
-            policy__store__in=[partnership.store_a, partnership.store_b],
+            partnership_slug=slug,
             issued_at__date=today,
         ).first()
 
         if existing_coupon:
             serializer = CouponSerializer(existing_coupon)
             return Response(
-                success(data={"coupon": serializer.data}, message="오늘 이미 발급된 쿠폰이 있습니다."),
+                success(
+                    data={"coupon": serializer.data},
+                    message="오늘 이미 발급된 쿠폰이 있습니다.",
+                ),
                 status=status.HTTP_200_OK,
             )
 
-        # 5. 새 쿠폰 발급 (24시간 유효)
         coupon = Coupon.objects.create(
             user=request.user,
             policy=policy,
             short_code=generate_short_code(),
+            partnership_slug=slug,          # ← 핵심
             expired_at=timezone.now() + timedelta(hours=24),
         )
 
@@ -167,6 +166,7 @@ class CouponIssueView(APIView):
             success(data={"coupon": serializer.data}, message="쿠폰 발급 성공"),
             status=status.HTTP_201_CREATED,
         )
+
 
 
 class CouponUseView(APIView):
@@ -221,3 +221,5 @@ class CouponUseView(APIView):
             success(data={"coupon": serializer.data}, message="쿠폰이 사용되었습니다."),
             status=status.HTTP_200_OK,
         )
+    
+

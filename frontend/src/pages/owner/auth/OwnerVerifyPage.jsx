@@ -152,7 +152,8 @@ export default function OwnerVerifyPage() {
     <MobileShell>
       <PageContainer>
         <Hero title="승인 대기중" />
-
+        
+        <Spacer size="xs" />
         <StatusEmoji>⏱️</StatusEmoji>
         <StatusText>
           회원가입이 완료되었습니다.
@@ -160,7 +161,6 @@ export default function OwnerVerifyPage() {
           관리자 승인 후 서비스를 이용하실 수 있습니다.
         </StatusText>
 
-        <Spacer size="lg" />
 
         {/* 즉시 인증 Section */}
         <SectionCard title="빠른 승인 (운영팀 전용)">
@@ -188,7 +188,6 @@ export default function OwnerVerifyPage() {
           </InfoText>
         </SectionCard>
 
-        <Spacer size="lg" />
 
         {/* 사업자등록증 업로드 Section */}
         <SectionCard title="사업자등록증 재업로드">
@@ -215,7 +214,7 @@ export default function OwnerVerifyPage() {
           </PrimaryButton>
         </SectionCard>
 
-        <Spacer size="xl" />
+        <Spacer size="xs" />
 
         <SubtleButton onClick={() => navigate("/login")}>
           ← 로그인 페이지로 돌아가기

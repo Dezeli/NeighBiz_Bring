@@ -164,6 +164,7 @@ class ProposalActionSerializer(serializers.Serializer):
 class QRCodeSerializer(serializers.Serializer):
     partnership_id = serializers.IntegerField()
     slug = serializers.CharField()
+    partner_slug = serializers.CharField()
     qr_code_url = serializers.URLField()
 
 

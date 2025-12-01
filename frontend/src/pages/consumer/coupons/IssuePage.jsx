@@ -463,7 +463,6 @@ const IssuePage = () => {
       <LoadingIcon>
         <LoadingRing />
         <LoadingRing className="spinning" />
-        <LoadingIconInner>🎁</LoadingIconInner>
       </LoadingIcon>
       <StepTitle>쿠폰 발급 중</StepTitle>
       <StepDescription>특별한 혜택을 준비하고 있어요</StepDescription>
@@ -474,20 +473,17 @@ const IssuePage = () => {
     <StepContainer>
       <LoadingIcon>
         <LoadingRing />
-        <LoadingIconInner>⚠️</LoadingIconInner>
       </LoadingIcon>
       <StepTitle>문제가 발생했어요</StepTitle>
       <StepDescription>{error}</StepDescription>
 
       {error && (
         <ErrorContainer>
-          <ErrorIcon>⚠️</ErrorIcon>
           <ErrorText>{error}</ErrorText>
         </ErrorContainer>
       )}
 
       <PrimaryButton onClick={() => window.location.reload()}>
-        <ButtonIcon>🔄</ButtonIcon>
         다시 시도하기
       </PrimaryButton>
     </StepContainer>
@@ -496,9 +492,6 @@ const IssuePage = () => {
   const renderCouponStep = () => (
     <CouponContainer>
       <CouponHeader $used={couponData?.status === 'used'}>
-        <CouponIconWrapper>
-          {couponData?.status === 'used' ? '✅' : '🎫'}
-        </CouponIconWrapper>
         <CouponTitle>
           {couponData?.status === 'used' ? '사용 완료!' : '쿠폰 발급 완료!'}
         </CouponTitle>
@@ -520,7 +513,6 @@ const IssuePage = () => {
             <InfoLabel>발급일시</InfoLabel>
             <InfoValue>{formatDate(couponData?.issued_at)}</InfoValue>
           </InfoContent>
-          <InfoIconEmoji>📅</InfoIconEmoji>
         </InfoBox>
 
         {couponData?.expired_at && (
@@ -529,13 +521,11 @@ const IssuePage = () => {
               <InfoLabel>유효기간</InfoLabel>
               <InfoValue>{formatDate(couponData?.expired_at)}</InfoValue>
             </InfoContent>
-            <InfoIconEmoji>⏰</InfoIconEmoji>
           </InfoBox>
         )}
 
         {error && (
           <ErrorContainer>
-            <ErrorIcon>⚠️</ErrorIcon>
             <ErrorText>{error}</ErrorText>
           </ErrorContainer>
         )}
@@ -557,7 +547,6 @@ const IssuePage = () => {
         ) : (
           <UsedButton>
             <UsedButtonContent>
-              <UsedIcon>✅</UsedIcon>
               <span>사용 완료</span>
             </UsedButtonContent>
           </UsedButton>

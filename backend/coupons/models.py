@@ -35,6 +35,7 @@ class Coupon(models.Model):
     policy = models.ForeignKey(CouponPolicy, on_delete=models.CASCADE, related_name="coupons")
 
     short_code = models.CharField(max_length=12, unique=True)
+    partnership_slug = models.CharField(max_length=32, db_index=True)
 
     status = models.CharField(
         max_length=10,

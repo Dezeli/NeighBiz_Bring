@@ -329,19 +329,17 @@ const OwnerProfilePage = () => {
 
         {/* 3) 설정 */}
         <SectionCard title="설정">
-          <SettingsList>
+          {/* <SettingsList>
 
-            {/* 비밀번호 변경 */}
             <SettingButton onClick={handleChangePassword}>
               비밀번호 변경
             </SettingButton>
 
-            {/* 회원탈퇴 */}
             <DangerButton onClick={handleDeleteAccount}>
               회원탈퇴
             </DangerButton>
 
-          </SettingsList>
+          </SettingsList> */}
 
           {/* 로그아웃은 Primary 버튼 유지 */}
           <PrimaryButton onClick={handleLogout}>
