@@ -2,8 +2,9 @@ import axios from 'axios';
 
 const ACCESS_TOKEN_KEY = 'accessToken';
 const REFRESH_TOKEN_KEY = 'refreshToken';
-const BASE_URL = 'http://localhost:8000/api/v1';
+// const BASE_URL = 'http://localhost:8000/api/v1';
 // const BASE_URL = 'http://15.164.211.115/api/v1';
+const BASE_URL = 'http://neighbiz.store/api/v1';
 
 class TokenManager {
   static instance = null;
