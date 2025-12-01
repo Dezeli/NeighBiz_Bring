@@ -1,548 +1,154 @@
-import { useEffect, useState } from 'react';
-import styled from 'styled-components';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../../context/AuthContext';
+// src/pages/owner/posts/PostsListPage.jsx
+import { useEffect, useState } from "react";
+import styled from "styled-components";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../../context/AuthContext";
 
-const Container = styled.div`
-  min-height: 100vh;
-  background: linear-gradient(135deg, #f8fafc 0%, #e0f2fe 100%);
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 0;
-`;
+// Layout
+import MobileShell from "../../../design/layout/MobileShell";
+import PageContainer from "../../../design/layout/PageContainer";
 
-const ContentWrapper = styled.div`
-  width: 100vw;
-  max-width: 390px;
-  min-height: 100vh;
-  background: white;
-  padding: 2rem 1.5rem;
-  display: flex;
-  flex-direction: column;
-  
-  @media (min-width: 391px) {
-    border-radius: 16px;
-    min-height: 844px;
-    max-height: 90vh;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    border: 1px solid rgba(226, 232, 240, 0.8);
-    overflow-y: auto;
-  }
-`;
+// UI Kit
+import {
+  Input,
+  PrimaryButton,
+  SubtleButton,
+  SectionCard,
+  SoftSectionCard,
+  Spacer,
+  Hero,
+  Row,
+  Col,
+  ClickableCard,
+  StatusBadge,
+  Select,
+  TabButton 
+} from "../../../design/components";
 
-const LogoSection = styled.div`
-  text-align: center;
-  margin-bottom: 2rem;
-`;
-
-const Logo = styled.h1`
-  font-size: 2rem;
-  font-weight: 800;
-  margin-bottom: 0.5rem;
-  letter-spacing: -0.02em;
-  
-  .neigh {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-  
-  .biz {
-    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-`;
-
-const NavigationTabs = styled.div`
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 2rem;
-  padding: 0.5rem;
-  background: rgba(248, 250, 252, 0.8);
-  border-radius: 16px;
-  border: 1px solid rgba(226, 232, 240, 0.6);
-`;
-
-const TabButton = styled.button`
-  flex: 1;
-  height: 48px;
-  border: none;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.25rem;
-  
-  ${props => props.$active ? `
-    background: linear-gradient(135deg, #10b981 0%, #0ea5e9 100%);
-    color: white;
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-    cursor: default;
-  ` : `
-    background: white;
-    color: #374151;
-    border: 1px solid rgba(226, 232, 240, 0.8);
-    
-    &:hover {
-      background: #f9fafb;
-      border-color: #d1d5db;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-  `}
-`;
-
-const TabIcon = styled.span`
-  font-size: 1rem;
-`;
-
-const TabLabel = styled.span`
-  font-size: 0.7rem;
-`;
-
-const FilterSection = styled.div`
-  background: linear-gradient(135deg, #fef7ff 0%, #f0f9ff 100%);
-  border: 2px solid rgba(147, 51, 234, 0.1);
-  border-radius: 20px;
-  padding: 1.5rem;
-  margin-bottom: 2rem;
-  box-shadow: 0 4px 12px rgba(147, 51, 234, 0.08);
-`;
-
-const FilterTitle = styled.h3`
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: #581c87;
-  margin-bottom: 1.25rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-`;
-
-const FilterGrid = styled.div`
-  display: grid;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-`;
-
-const FilterRow = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
-`;
-
-const FilterGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-`;
-
-const FilterLabel = styled.label`
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #581c87;
-`;
-
-const FilterInput = styled.input`
-  width: 100%;
-  height: 40px;
-  padding: 0 0.75rem;
-  border: 2px solid rgba(147, 51, 234, 0.2);
-  border-radius: 10px;
-  font-size: 0.875rem;
-  background: white;
-  box-sizing: border-box;
-  
-  &:focus {
-    outline: none;
-    border-color: #9333ea;
-    box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.1);
-  }
-`;
-
-const FilterSelect = styled.select`
-  width: 100%;
-  height: 40px;
-  padding: 0 0.75rem;
-  border: 2px solid rgba(147, 51, 234, 0.2);
-  border-radius: 10px;
-  font-size: 0.875rem;
-  background: white;
-  box-sizing: border-box;
-  
-  &:focus {
-    outline: none;
-    border-color: #9333ea;
-    box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.1);
-  }
-`;
-
-const FilterActions = styled.div`
-  display: flex;
-  gap: 0.75rem;
-`;
-
-const FilterButton = styled.button`
-  flex: 1;
-  height: 44px;
-  border: none;
-  border-radius: 12px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-`;
-
-const ApplyButton = styled(FilterButton)`
-  background: linear-gradient(135deg, #9333ea 0%, #7c3aed 100%);
-  color: white;
-  
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(147, 51, 234, 0.4);
-  }
-`;
-
-const ResetButton = styled(FilterButton)`
-  background: white;
-  color: #581c87;
-  border: 2px solid rgba(147, 51, 234, 0.3);
-  
-  &:hover {
-    background: #faf5ff;
-    border-color: #9333ea;
-  }
-`;
-
-const PostsSection = styled.div`
-  background: linear-gradient(135deg, #f0fdf4 0%, #ecfeff 100%);
-  border: 2px solid rgba(16, 185, 129, 0.1);
-  border-radius: 20px;
-  padding: 1.5rem;
-  margin-bottom: 2rem;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.08);
-  flex: 1;
-`;
-
-const PostsSectionTitle = styled.h3`
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: #065f46;
-  margin-bottom: 1.25rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-`;
-
-const PostsList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-`;
-
-const PostCard = styled.div`
-  background: white;
-  border: 2px solid rgba(16, 185, 129, 0.15);
-  border-radius: 16px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.08);
-  transition: all 0.3s ease;
-  cursor: ${props => (props.$disabled ? 'default' : 'pointer')};
-  opacity: ${props => (props.$disabled ? 0.7 : 1)};
-  pointer-events: ${props => (props.$disabled ? 'none' : 'auto')};
-
-  &:hover {
-    ${props => !props.$disabled && `
-      box-shadow: 0 8px 20px rgba(16, 185, 129, 0.15);
-      transform: translateY(-3px);
-      border-color: rgba(16, 185, 129, 0.3);
-    `}
-  }
-
-  &:active {
-    ${props => !props.$disabled && `transform: translateY(-1px);`}
-  }
-`;
-
-const PostHeader = styled.div`
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: 1rem;
-`;
-
-const AuthorInfo = styled.div`
-  display: flex;
-  align-items: center;
-  flex: 1;
-`;
-
-const AuthorAvatar = styled.div`
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 0.75rem;
-  font-size: 1.125rem;
-`;
-
-const AuthorDetails = styled.div`
-  flex: 1;
-`;
-
-const PostTitle = styled.h3`
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: #374151;
-  margin-bottom: 0.25rem;
-`;
-
-const PostMeta = styled.p`
-  font-size: 0.75rem;
-  color: #6b7280;
-`;
-
-const StatusBadge = styled.div`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.375rem 0.75rem;
-  background: ${p => p.$bg || 'rgba(16,185,129,0.10)'};
-  color: ${p => p.$color || '#065f46'};
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 600;
-`;
-
-const StatusDot = styled.div`
-  width: 6px;
-  height: 6px;
-  background: ${p => p.$dot || '#10b981'};
-  border-radius: 50%;
-`;
-
-const CouponDescription = styled.div`
-  background: rgba(248, 250, 252, 0.8);
-  border-radius: 12px;
-  padding: 1rem;
-  margin-bottom: 1rem;
-`;
-
-const CouponLabel = styled.p`
-  color: #374151;
-  font-size: 0.875rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-`;
-
-const CouponText = styled.p`
-  color: #6b7280;
-  font-size: 0.875rem;
-  line-height: 1.4;
-`;
-
-const CouponInfo = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-`;
-
-const InfoBox = styled.div`
-  background: ${props => props.$variant === 'value' ? 
-    'rgba(59, 130, 246, 0.1)' : 'rgba(147, 51, 234, 0.1)'
-  };
-  border-radius: 12px;
-  padding: 0.75rem;
-`;
-
-const InfoLabel = styled.p`
-  font-size: 0.75rem;
-  font-weight: 600;
-  margin-bottom: 0.25rem;
-  color: ${props => props.$variant === 'value' ? '#1e40af' : '#7c2d12'};
-`;
-
-const InfoValue = styled.p`
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: ${props => props.$variant === 'value' ? '#1e3a8a' : '#581c87'};
-`;
-
-const EmptyState = styled.div`
-  text-align: center;
-  padding: 3rem 1rem;
-  background: white;
-  border: 2px dashed rgba(16, 185, 129, 0.2);
-  border-radius: 16px;
-`;
-
-const EmptyIcon = styled.div`
-  font-size: 3rem;
-  margin-bottom: 1rem;
-`;
-
-const EmptyTitle = styled.h3`
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #374151;
-  margin-bottom: 0.5rem;
-`;
-
-const EmptyDescription = styled.p`
-  color: #6b7280;
-  font-size: 0.875rem;
-  line-height: 1.5;
-`;
-
-const LoadingContainer = styled.div`
-  text-align: center;
-  padding: 3rem 1rem;
-`;
-
-const LoadingSpinner = styled.div`
-  width: 32px;
-  height: 32px;
-  border: 3px solid rgba(16, 185, 129, 0.2);
-  border-top: 3px solid #10b981;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 1rem;
-
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-`;
-
-const LoadingText = styled.p`
-  color: #6b7280;
-  font-size: 0.875rem;
-`;
-
-const ErrorContainer = styled.div`
-  text-align: center;
-  padding: 3rem 1rem;
-`;
-
-const ErrorIcon = styled.div`
-  font-size: 3rem;
-  margin-bottom: 1rem;
-`;
-
-const ErrorText = styled.p`
-  color: #6b7280;
-  font-size: 0.875rem;
-  margin-bottom: 1.5rem;
-`;
-
-const RetryButton = styled.button`
-  background: linear-gradient(135deg, #10b981 0%, #0ea5e9 100%);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  padding: 0.75rem 1.5rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
-  }
-`;
-
-const Footer = styled.div`
-  text-align: center;
-  margin-top: 1rem;
-  color: #9ca3af;
-  font-size: 0.75rem;
-`;
+import { colors } from "../../../design/tokens/colors";
+import { spacing } from "../../../design/tokens/spacing";
+import { radius } from "../../../design/tokens/radius";
+import { typography } from "../../../design/tokens/typography";
 
 const PostsListPage = () => {
   const navigate = useNavigate();
   const { apiCall } = useAuth();
-  
+
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+
+
 
   const [filters, setFilters] = useState({
-    category: '',
-    description: '',
-    expected_value_min: '',
-    expected_value_max: '',
-    duration: '',
-    monthly_limit_min: '',
-    monthly_limit_max: '',
-    updated_at_after: '',
-    updated_at_before: '',
-    is_partnered: ''
+    category: "",
+    description: "",
+    expected_value_min: "",
+    expected_value_max: "",
+    duration: "",
+    monthly_limit_min: "",
+    monthly_limit_max: "",
+    updated_at_after: "",
+    updated_at_before: "",
+    is_partnered: "",
   });
 
   const buildQueryParams = () => {
     const params = new URLSearchParams();
-    params.append('page', currentPage.toString());
-    
+    params.append("page", currentPage.toString());
+
     Object.entries(filters).forEach(([key, value]) => {
       if (value && value.toString().trim()) {
         params.append(key, value.toString().trim());
       }
     });
-    
+
     return params.toString();
   };
 
   const fetchPosts = async () => {
     setLoading(true);
-    setError('');
+    setError("");
+
     try {
       const queryString = buildQueryParams();
+
       const response = await apiCall({
-        method: 'GET',
+        method: "GET",
         url: `/stores/posts/?${queryString}`,
       });
 
       let postsData = [];
-      if (response && response.data && response.data.results && Array.isArray(response.data.results)) {
+
+      if (
+        response?.data?.results &&
+        Array.isArray(response.data.results)
+      ) {
         postsData = response.data.results;
-      } else if (Array.isArray(response)) {
-        postsData = response;
-      } else {
-        console.error('Unexpected API response structure:', response);
-        postsData = [];
+        if (postsData.length > 0 && currentPage === 1) {
+          setPageSize(postsData.length);
+        }
+
+        if (response.data.count) {
+          const total = Math.ceil(response.data.count / pageSize);
+          setTotalPages(total);
+        }
       }
 
       setPosts(postsData);
-    } catch (err) {
-      console.error('API Error:', err);
-      setError('게시글을 불러오는데 실패했습니다.');
+    } catch {
+      setError("게시글을 불러오는데 실패했습니다.");
       setPosts([]);
     } finally {
       setLoading(false);
     }
   };
 
+
   useEffect(() => {
     fetchPosts();
   }, [currentPage]);
 
   const handleFilterChange = (key, value) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+    setFilters((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handlePriceBlurMin = (key, inputValue) => {
+    const raw = Number(inputValue);
+    if (isNaN(raw)) return;
+
+    const rounded = Math.floor(raw / 500) * 500;
+    setFilters((prev) => ({ ...prev, [key]: rounded }));
+  };
+
+  const handlePriceBlurMax = (key, inputValue) => {
+    const raw = Number(inputValue);
+    if (isNaN(raw)) return;
+
+    const rounded = Math.ceil(raw / 500) * 500;
+    setFilters((prev) => ({ ...prev, [key]: rounded }));
+  };
+
+
+  const handleMonthlyBlurMin = (key, inputValue) => {
+    const raw = Number(inputValue);
+    if (isNaN(raw)) return;
+
+    const rounded = Math.floor(raw / 10) * 10;
+    setFilters((prev) => ({ ...prev, [key]: rounded }));
+  };
+
+  const handleMonthlyBlurMax = (key, inputValue) => {
+    const raw = Number(inputValue);
+    if (isNaN(raw)) return;
+
+    const rounded = Math.ceil(raw / 10) * 10;
+    setFilters((prev) => ({ ...prev, [key]: rounded }));
   };
 
   const applyFilters = () => {
@@ -552,16 +158,16 @@ const PostsListPage = () => {
 
   const resetFilters = () => {
     setFilters({
-      category: '',
-      description: '',
-      expected_value_min: '',
-      expected_value_max: '',
-      duration: '',
-      monthly_limit_min: '',
-      monthly_limit_max: '',
-      updated_at_after: '',
-      updated_at_before: '',
-      is_partnered: ''
+      category: "",
+      description: "",
+      expected_value_min: "",
+      expected_value_max: "",
+      duration: "",
+      monthly_limit_min: "",
+      monthly_limit_max: "",
+      updated_at_after: "",
+      updated_at_before: "",
+      is_partnered: "",
     });
     setCurrentPage(1);
     fetchPosts();
@@ -569,19 +175,19 @@ const PostsListPage = () => {
 
   const formatDuration = (duration) => {
     const durationMap = {
-      '1_month': '1개월',
-      '2_months': '2개월',
-      '3_months': '3개월',
-      '6_months': '6개월',
-      '1_year': '1년',
+      "1_month": "1개월",
+      "2_months": "2개월",
+      "3_months": "3개월",
+      "6_months": "6개월",
+      "1_year": "1년",
     };
     return durationMap[duration] || duration;
   };
 
   const formatPrice = (price) => {
-    if (price == null) return '-';
+    if (price == null) return "-";
     try {
-      return Number(price).toLocaleString('ko-KR');
+      return Number(price).toLocaleString("ko-KR");
     } catch {
       return String(price);
     }
@@ -589,321 +195,612 @@ const PostsListPage = () => {
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    if (isNaN(date.getTime())) return '';
-    return date.toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
+    if (isNaN(date.getTime())) return "";
+    return date.toLocaleDateString("ko-KR", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
-  };
-
-  const getCategoryIcon = (category) => {
-    const categoryIcons = {
-      cafe: '☕',
-      restaurant: '🍽️',
-      bakery: '🥐',
-      pub: '🍺',
-      fitness: '💪',
-      study: '📚',
-      florist: '🌸',
-      convenience: '🏪',
-      entertain: '🎵',
-      other: '🛍️'
-    };
-    return categoryIcons[category] || '🏪';
   };
 
   const getCategoryName = (category) => {
     const categoryNames = {
-      cafe: '카페',
-      restaurant: '음식점',
-      bakery: '베이커리',
-      pub: '주점',
-      fitness: '운동',
-      study: '독서실',
-      florist: '꽃집',
-      convenience: '편의점',
-      entertain: '유흥시설',
-      other: '기타'
+      cafe: "카페",
+      restaurant: "음식점",
+      bakery: "베이커리",
+      pub: "주점",
+      fitness: "운동",
+      study: "독서실",
+      florist: "꽃집",
+      convenience: "편의점",
+      entertain: "유흥시설",
+      other: "기타",
     };
     return categoryNames[category] || category;
   };
 
   const getStatusMeta = (isPartnered) => {
     if (isPartnered) {
-      return { label: '제휴완료', bg: 'rgba(59,130,246,0.10)', color: '#1e3a8a', dot: '#3b82f6' };
+      return {
+        label: "제휴 완료",
+        bg: "rgba(59,130,246,0.10)",
+        color: "#1e3a8a",
+        dot: "#3b82f6",
+      };
     } else {
-      return { label: '모집중', bg: 'rgba(16,185,129,0.10)', color: '#065f46', dot: '#10b981' };
+      return {
+        label: "제휴 모집중",
+        bg: "rgba(16,185,129,0.10)",
+        color: "#065f46",
+        dot: "#10b981",
+      };
     }
   };
 
-  const isPostClickable = (isPartnered) => !isPartnered;
+  const getPageNumbers = () => {
+    if (totalPages <= 5) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
 
-  if (loading && posts.length === 0) {
-    return (
-      <Container>
-        <ContentWrapper>
-          <LoadingContainer>
-            <LoadingSpinner />
-            <LoadingText>게시글을 불러오는 중...</LoadingText>
-          </LoadingContainer>
-        </ContentWrapper>
-      </Container>
-    );
-  }
+    // 현재 페이지가 앞쪽 (1~3)
+    if (currentPage <= 3) {
+      return [1, 2, 3, 4, 5, "...", totalPages];
+    }
 
-  if (error) {
-    return (
-      <Container>
-        <ContentWrapper>
-          <ErrorContainer>
-            <ErrorIcon>❌</ErrorIcon>
-            <ErrorText>{error}</ErrorText>
-            <RetryButton onClick={fetchPosts}>
-              다시 시도
-            </RetryButton>
-          </ErrorContainer>
-        </ContentWrapper>
-      </Container>
-    );
-  }
+    // 현재 페이지가 뒤쪽 (마지막 - 2)
+    if (currentPage >= totalPages - 2) {
+      return [
+        1,
+        "...",
+        totalPages - 4,
+        totalPages - 3,
+        totalPages - 2,
+        totalPages - 1,
+        totalPages,
+      ];
+    }
+
+    // 중간에 있을 때
+    return [
+      1,
+      "...",
+      currentPage - 1,
+      currentPage,
+      currentPage + 1,
+      "...",
+      totalPages,
+    ];
+  };
+
+
+  const goToPage = (page) => {
+    if (page < 1 || page > totalPages) return;
+    setCurrentPage(page);
+  };
+
+  const hasNoResults = !loading && !error && posts.length === 0;
 
   return (
-    <Container>
-      <ContentWrapper>
-        <LogoSection>
-          <Logo>
-            <span className="neigh">Neigh</span>
-            <span className="biz">Biz</span>
-          </Logo>
-        </LogoSection>
+    <MobileShell>
+      <PageContainer>
+        <Hero />
+        <SoftSectionCard> 
+          <Row gap="sm" justify="space-between"> 
+            <TabButton 
+              $active={true} 
+              onClick={() => navigate("/owner/posts")} 
+            > 
+              게시글 
+            </TabButton> 
+            <TabButton onClick={() => navigate("/owner/proposals")}> 
+              제휴관리 
+            </TabButton> 
+            <TabButton onClick={() => navigate("/owner/profile")}> 
+              마이페이지 
+            </TabButton> 
+          </Row> 
+        </SoftSectionCard>
+        <SectionCard>
+          {/* 상단 헤더 */}
+          <FilterHeader>
+            <FilterTitle>검색 필터</FilterTitle>
 
-        <NavigationTabs>
-          <TabButton onClick={() => navigate('/owner/posts')}>
-            <TabIcon>📋</TabIcon>
-            <TabLabel>게시글</TabLabel>
-          </TabButton>
-          <TabButton onClick={() => navigate('/owner/proposals')}>
-            <TabIcon>🤝</TabIcon>
-            <TabLabel>제휴관리</TabLabel>
-          </TabButton>
-          <TabButton onClick={() => navigate('/owner/profile')}>
-            <TabIcon>👤</TabIcon>
-            <TabLabel>마이페이지</TabLabel>
-          </TabButton>
-        </NavigationTabs>
+            <FilterToggle onClick={() => setIsFilterOpen((prev) => !prev)}>
+              {isFilterOpen ? "필터 닫기 ▲" : "필터 열기 ▼"}
+            </FilterToggle>
+          </FilterHeader>
 
-        <FilterSection>
-          <FilterTitle>🔍 검색 필터</FilterTitle>
-          <FilterGrid>
-            <FilterRow>
-              <FilterGroup>
-                <FilterLabel>카테고리</FilterLabel>
-                <FilterSelect
-                  value={filters.category}
-                  onChange={e => handleFilterChange('category', e.target.value)}
-                >
-                  <option value="">전체</option>
-                  <option value="cafe">카페</option>
-                  <option value="restaurant">음식점</option>
-                  <option value="bakery">베이커리</option>
-                  <option value="pub">주점</option>
-                  <option value="fitness">운동</option>
-                  <option value="study">독서실</option>
-                  <option value="florist">꽃집</option>
-                  <option value="convenience">편의점</option>
-                  <option value="entertain">유흥시설</option>
-                  <option value="other">기타</option>
-                </FilterSelect>
-              </FilterGroup>
-              <FilterGroup>
-                <FilterLabel>쿠폰 설명 검색</FilterLabel>
-                <FilterInput
-                  type="text"
-                  placeholder="예: 아메리카노"
-                  value={filters.description}
-                  onChange={e => handleFilterChange('description', e.target.value)}
-                />
-              </FilterGroup>
-            </FilterRow>
-            <FilterRow>
-              <FilterGroup>
-                <FilterLabel>최소 가격</FilterLabel>
-                <FilterInput
-                  type="number"
-                  placeholder="1000"
-                  value={filters.expected_value_min}
-                  onChange={e => handleFilterChange('expected_value_min', e.target.value)}
-                />
-              </FilterGroup>
-              <FilterGroup>
-                <FilterLabel>최대 가격</FilterLabel>
-                <FilterInput
-                  type="number"
-                  placeholder="5000"
-                  value={filters.expected_value_max}
-                  onChange={e => handleFilterChange('expected_value_max', e.target.value)}
-                />
-              </FilterGroup>
-            </FilterRow>
-            <FilterRow>
-              <FilterGroup>
-                <FilterLabel>유효기간</FilterLabel>
-                <FilterSelect
-                  value={filters.duration}
-                  onChange={e => handleFilterChange('duration', e.target.value)}
-                >
-                  <option value="">전체</option>
-                  <option value="1_month">1개월</option>
-                  <option value="2_months">2개월</option>
-                  <option value="3_months">3개월</option>
-                  <option value="6_months">6개월</option>
-                  <option value="1_year">1년</option>
-                </FilterSelect>
-              </FilterGroup>
-              <FilterGroup>
-                <FilterLabel>제휴 여부</FilterLabel>
-                <FilterSelect
-                  value={filters.is_partnered}
-                  onChange={e => handleFilterChange('is_partnered', e.target.value)}
-                >
-                  <option value="">전체</option>
-                  <option value="true">제휴완료</option>
-                  <option value="false">모집중</option>
-                </FilterSelect>
-              </FilterGroup>
-            </FilterRow>
-            <FilterRow>
-              <FilterGroup>
-                <FilterLabel>최소 월한도</FilterLabel>
-                <FilterInput
-                  type="number"
-                  placeholder="10"
-                  value={filters.monthly_limit_min}
-                  onChange={e => handleFilterChange('monthly_limit_min', e.target.value)}
-                />
-              </FilterGroup>
-              <FilterGroup>
-                <FilterLabel>최대 월한도</FilterLabel>
-                <FilterInput
-                  type="number"
-                  placeholder="100"
-                  value={filters.monthly_limit_max}
-                  onChange={e => handleFilterChange('monthly_limit_max', e.target.value)}
-                />
-              </FilterGroup>
-            </FilterRow>
-            <FilterRow>
-              <FilterGroup>
-                <FilterLabel>시작 날짜</FilterLabel>
-                <FilterInput
-                  type="date"
-                  value={filters.updated_at_after}
-                  onChange={e => handleFilterChange('updated_at_after', e.target.value)}
-                />
-              </FilterGroup>
-              <FilterGroup>
-                <FilterLabel>종료 날짜</FilterLabel>
-                <FilterInput
-                  type="date"
-                  value={filters.updated_at_before}
-                  onChange={e => handleFilterChange('updated_at_before', e.target.value)}
-                />
-              </FilterGroup>
-            </FilterRow>
-          </FilterGrid>
-          <FilterActions>
-            <ResetButton onClick={resetFilters}>초기화</ResetButton>
-            <ApplyButton onClick={applyFilters}>검색</ApplyButton>
-          </FilterActions>
-        </FilterSection>
+          {/* 1줄 — 항상 보임 */}
+          <Row gap="md">
+            <Col gap="sm">
+              <Select label="카테고리"
+                value={filters.category}
+                onChange={(e) => handleFilterChange("category", e.target.value)}
+              >
+                <option value="">전체</option>
+                <option value="cafe">카페</option>
+                <option value="restaurant">음식점</option>
+                <option value="bakery">베이커리</option>
+                <option value="pub">주점</option>
+                <option value="fitness">운동</option>
+                <option value="study">독서실</option>
+                <option value="florist">꽃집</option>
+                <option value="convenience">편의점</option>
+                <option value="entertain">유흥시설</option>
+                <option value="other">기타</option>
+              </Select>
+            </Col>
 
-        <PostsSection>
-          <PostsSectionTitle>📋 제휴 게시글 목록</PostsSectionTitle>
-          <PostsList>
-            {posts.length === 0 ? (
-              <EmptyState>
-                <EmptyIcon>📝</EmptyIcon>
-                <EmptyTitle>조건에 맞는 게시글이 없습니다</EmptyTitle>
-                <EmptyDescription>
-                  필터 조건을 변경해서 다시 검색해보세요
-                </EmptyDescription>
-              </EmptyState>
-            ) : (
-              posts.map((post) => {
+            <Col gap="sm">
+              <Select label="유효기간"
+                value={filters.duration}
+                onChange={(e) => handleFilterChange("duration", e.target.value)}
+              >
+                <option value="">전체</option>
+                <option value="1_month">1개월</option>
+                <option value="2_months">2개월</option>
+                <option value="3_months">3개월</option>
+                <option value="6_months">6개월</option>
+                <option value="1_year">1년</option>
+              </Select>
+            </Col>
+
+            <Col gap="sm">
+              <Select label="제휴 여부"
+                value={filters.is_partnered}
+                onChange={(e) => handleFilterChange("is_partnered", e.target.value)}
+              >
+                <option value="">전체</option>
+                <option value="true">제휴 완료</option>
+                <option value="false">제휴 모집중</option>
+              </Select>
+            </Col>
+          </Row>
+
+
+          {/* 접힘 상태: 상세 필터 숨김 */}
+          {isFilterOpen && (
+            <>
+              {/* 2줄 */}
+              <Row gap="md">
+                {/* 최소 가격 */}
+                <Col gap="sm">
+                  <Input
+                    label="최소 가격"
+                    type="number"
+                    step="500"
+                    unit="원"
+                    value={filters.expected_value_min}
+                    placeholder="500"
+                    onChange={(e) =>
+                      handleFilterChange("expected_value_min", e.target.value)
+                    }
+                    onBlur={(e) =>
+                      handlePriceBlurMin("expected_value_min", e.target.value)
+                    }
+                  />
+                </Col>
+
+                {/* 최대 가격 */}
+                <Col gap="sm">
+                  <Input
+                    label="최대 가격"
+                    type="number"
+                    step="500"
+                    unit="원"
+                    value={filters.expected_value_max}
+                    placeholder="5000"
+                    onChange={(e) =>
+                      handleFilterChange("expected_value_max", e.target.value)
+                    }
+                    onBlur={(e) =>
+                      handlePriceBlurMax("expected_value_max", e.target.value)
+                    }
+                  />
+                </Col>
+
+                {/* 최소 월한도 */}
+                <Col gap="sm">
+                  <Input
+                    label="최소 월한도"
+                    type="number"
+                    step="10"
+                    unit="매"
+                    value={filters.monthly_limit_min}
+                    placeholder="10"
+                    onChange={(e) =>
+                      handleFilterChange("monthly_limit_min", e.target.value)
+                    }
+                    onBlur={(e) =>
+                      handleMonthlyBlurMin("monthly_limit_min", e.target.value)
+                    }
+                  />
+                </Col>
+
+                {/* 최대 월한도 */}
+                <Col gap="sm">
+                  <Input
+                    label="최대 월한도"
+                    type="number"
+                    step="10"
+                    unit="매"
+                    value={filters.monthly_limit_max}
+                    placeholder="500"
+                    onChange={(e) =>
+                      handleFilterChange("monthly_limit_max", e.target.value)
+                    }
+                    onBlur={(e) =>
+                      handleMonthlyBlurMax("monthly_limit_max", e.target.value)
+                    }
+                  />
+                </Col>
+
+              </Row>
+
+
+              {/* 3줄 */}
+              <Row gap="md">
+                <Col gap="sm">
+                  <Input
+                    label="시작 날짜"
+                    type="date"
+                    value={filters.updated_at_after}
+                    onChange={(e) =>
+                      handleFilterChange("updated_at_after", e.target.value)
+                    }
+                  />
+                </Col>
+
+                <Col gap="sm">
+                  <Input
+                    label="종료 날짜"
+                    type="date"
+                    value={filters.updated_at_before}
+                    onChange={(e) =>
+                      handleFilterChange("updated_at_before", e.target.value)
+                    }
+                  />
+                </Col>
+              </Row>
+
+              {/* 4줄 */}
+              <Input
+                label="쿠폰 설명 검색"
+                value={filters.description}
+                onChange={(e) => handleFilterChange("description", e.target.value)}
+              />
+
+              <Spacer size="sm" />
+            </>
+          )}
+
+          {/* 🔥 초기화 / 검색 적용 — 항상 보임 */}
+          <Row gap="sm">
+            <SubtleButton onClick={resetFilters}>필터 초기화</SubtleButton>
+            <PrimaryButton onClick={applyFilters}>검색 적용</PrimaryButton>
+          </Row>
+
+        </SectionCard>
+
+
+
+        {/* 목록 */}
+        <SectionCard title="제휴 게시글 목록">
+          {loading && posts.length === 0 && !error && (
+            <LoadingState>
+              <Spinner />
+              <LoadingText>게시글을 불러오는 중입니다...</LoadingText>
+            </LoadingState>
+          )}
+
+          {!loading && error && (
+            <>
+              <ErrorText>{error}</ErrorText>
+              <Spacer size="sm" />
+              <PrimaryButton onClick={fetchPosts}>다시 시도</PrimaryButton>
+            </>
+          )}
+
+          {hasNoResults && (
+            <EmptyState>
+              <EmptyTitle>검색 결과가 없습니다</EmptyTitle>
+              <EmptyDescription>
+                필터 조건을 변경해서 다시 검색해보세요.
+              </EmptyDescription>
+            </EmptyState>
+          )}
+
+          {!loading && !error && posts.length > 0 && (
+            <PostsListWrapper>
+              {posts.map((post) => {
                 const meta = getStatusMeta(post.is_partnered);
-                const disabled = !isPostClickable(post.is_partnered);
-                const category = post?.category;
 
                 return (
                   <PostCard
                     key={post.id}
-                    $disabled={disabled}
-                    onClick={() => !disabled && navigate(`/owner/post/${post.id}`)}
+                    $disabled={post.is_partnered}
+                    onClick={() =>
+                      !post.is_partnered &&
+                      navigate(`/owner/post/${post.id}`)
+                    }
                   >
-                    <PostHeader>
-                      <AuthorInfo>
-                        <AuthorAvatar>
-                          {getCategoryIcon(category)}
-                        </AuthorAvatar>
-                        <AuthorDetails>
-                          <PostTitle>{post.store_name}</PostTitle>
-                          <PostMeta>
-                            {getCategoryName(category)} • {post.owner_name} • {formatDate(post.updated_at)}
-                          </PostMeta>
-                        </AuthorDetails>
-                      </AuthorInfo>
-                      <StatusBadge $bg={meta.bg} $color={meta.color}>
-                        <StatusDot $dot={meta.dot} />
-                        {meta.label}
-                      </StatusBadge>
-                    </PostHeader>
+                    <RowHeader>
+                      <StoreInfo>
+                        <StoreName>{post.store_name}</StoreName>
+                        <StoreMetaWrapper>
+                          <MetaLine>
+                            {getCategoryName(post.category)} • {post.owner_name}
+                          </MetaLine>
+                          <MetaDate>{formatDate(post.updated_at)}</MetaDate>
+                        </StoreMetaWrapper>
+                      </StoreInfo>
 
-                    <CouponDescription>
-                      <CouponLabel>🎫 제공 쿠폰</CouponLabel>
-                      <CouponText>{post.description}</CouponText>
-                    </CouponDescription>
+                      <StatusBadge
+                        label={meta.label}
+                        bg={meta.bg}
+                        color={meta.color}
+                        dot={meta.dot}
+                      />
 
-                    <CouponInfo>
-                      <InfoBox $variant="value">
-                        <InfoLabel $variant="value">예상 가치</InfoLabel>
-                        <InfoValue $variant="value">
-                          {formatPrice(post.expected_value)}원
-                        </InfoValue>
+                    </RowHeader>
+
+                    <PostGrid>
+                      <InfoBox>
+                        <InfoLabel>쿠폰 설명</InfoLabel>
+                        <InfoValue>{post.description}</InfoValue>
                       </InfoBox>
-                      <InfoBox $variant="duration">
-                        <InfoLabel $variant="duration">월 한도</InfoLabel>
-                        <InfoValue $variant="duration">
-                          {post.monthly_limit}매
-                        </InfoValue>
+
+                      {/* 2) 예상 가치 */}
+                      <InfoBox>
+                        <InfoLabel>예상 가치</InfoLabel>
+                        <InfoValue>{formatPrice(post.expected_value)}원</InfoValue>
                       </InfoBox>
-                    </CouponInfo>
-                    
-                    {post.expected_duration && (
-                      <div style={{ 
-                        background: 'rgba(147, 51, 234, 0.1)', 
-                        borderRadius: '12px', 
-                        padding: '0.75rem', 
-                        marginBottom: '0.5rem' 
-                      }}>
-                        <InfoLabel style={{ color: '#7c2d12', margin: '0 0 0.25rem 0' }}>
-                          유효 기간: {formatDuration(post.expected_duration)}
-                        </InfoLabel>
-                      </div>
-                    )}
+
+                      {/* 3) 예상 기간 */}
+                      <InfoBox>
+                        <InfoLabel>예상 기간</InfoLabel>
+                        <InfoValue>{formatDuration(post.expected_duration)}</InfoValue>
+                      </InfoBox>
+
+                      {/* 4) 월 한도 */}
+                      <InfoBox>
+                        <InfoLabel>월 한도</InfoLabel>
+                        <InfoValue>{post.monthly_limit}매</InfoValue>
+                      </InfoBox>
+                    </PostGrid>
                   </PostCard>
                 );
-              })
-            )}
-          </PostsList>
-        </PostsSection>
+              })}
+            </PostsListWrapper>
+          )}
+        </SectionCard>
+        {!loading && (
+          <PaginationWrapper>
+            <PageButton
+              disabled={currentPage === 1}
+              onClick={() => goToPage(currentPage - 1)}
+            >
+              이전
+            </PageButton>
 
-        <Footer>
-          네이비즈 소상공인 제휴 플랫폼
-        </Footer>
-      </ContentWrapper>
-    </Container>
+            <PageNumbers>
+              {getPageNumbers().map((item, idx) =>
+                item === "..." ? (
+                  <Ellipsis key={idx}>...</Ellipsis>
+                ) : (
+                  <PageNumber
+                    key={item}
+                    $active={item === currentPage}
+                    onClick={() => goToPage(item)}
+                  >
+                    {item}
+                  </PageNumber>
+                )
+              )}
+            </PageNumbers>
+
+            <PageButton
+              disabled={currentPage === totalPages}
+              onClick={() => goToPage(currentPage + 1)}
+            >
+              다음
+            </PageButton>
+          </PaginationWrapper>
+        )}
+        <FooterText>네이비즈 소상공인 제휴 플랫폼</FooterText>
+      </PageContainer>
+    </MobileShell>
   );
 };
 
 export default PostsListPage;
+
+/* ------------------------
+   Styled Components
+------------------------- */
+const FilterHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: ${spacing.sm}px;
+`;
+
+const FilterTitle = styled.div`
+  font-size: ${typography.subtitle.size};
+  font-weight: ${typography.subtitle.weight};
+  color: ${colors.textPrimary};
+`;
+
+const FilterToggle = styled.div`
+  font-size: ${typography.small.size};
+  color: ${colors.primaryDark};
+  cursor: pointer;
+`;
+
+const LoadingState = styled.div`
+  padding: ${spacing.lg}px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: ${spacing.sm}px;
+`;
+
+const Spinner = styled.div`
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 3px solid rgba(0, 0, 0, 0.06);
+  border-top-color: ${colors.primary};
+  animation: spin 0.7s linear infinite;
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+`;
+
+const LoadingText = styled.div`
+  font-size: ${typography.body.size};
+  color: ${colors.textSecondary};
+`;
+
+const ErrorText = styled.div`
+  font-size: ${typography.body.size};
+  color: ${colors.error};
+`;
+
+const EmptyState = styled.div`
+  padding: ${spacing.lg}px 0;
+  text-align: center;
+`;
+
+const EmptyTitle = styled.div`
+  font-size: ${typography.subtitle.size};
+  font-weight: ${typography.subtitle.weight};
+`;
+
+const EmptyDescription = styled.div`
+  margin-top: 4px;
+  font-size: ${typography.small.size};
+  color: ${colors.textSecondary};
+`;
+
+const PostsListWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${spacing.md}px;
+  margin-top: ${spacing.sm}px;
+`;
+
+const PostCard = styled(ClickableCard)`
+  background: ${colors.white};
+  border-radius: ${radius.lg}px;
+  opacity: ${(p) => (p.$disabled ? 0.6 : 1)};
+  cursor: ${(p) => (p.$disabled ? "default" : "pointer")};
+`;
+
+const RowHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+`;
+
+const StoreInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+`;
+
+const StoreName = styled.div`
+  font-size: ${typography.subtitle.size};
+  font-weight: ${typography.subtitle.weight};
+  color: ${colors.textPrimary};
+`;
+
+const StoreMeta = styled.div`
+  font-size: ${typography.small.size};
+  color: ${colors.textSecondary};
+`;
+
+const PostGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: ${spacing.sm}px;
+  margin-top: ${spacing.md}px;
+`;
+
+const InfoBox = styled.div`
+  flex: 1;
+  padding: ${spacing.sm}px;
+  border-radius: ${radius.md}px;
+  background: ${colors.bgBase};
+`;
+
+const InfoLabel = styled.div`
+  font-size: ${typography.small.size};
+  color: ${colors.textSecondary};
+`;
+
+const InfoValue = styled.div`
+  font-size: ${typography.bodyBold.size};
+`;
+
+
+const FooterText = styled.div`
+  text-align: center;
+  font-size: ${typography.small.size};
+  color: ${colors.textMuted};
+`;
+
+
+const PaginationWrapper = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: ${spacing.sm}px;
+  margin-top: ${spacing.lg}px;
+`;
+
+const PageButton = styled.button`
+  padding: 6px 12px;
+  font-size: ${typography.body.size};
+  border-radius: ${radius.md}px;
+  background: ${(p) => (p.disabled ? colors.bgSoft : colors.bgPaper)};
+  color: ${(p) => (p.disabled ? colors.textMuted : colors.textPrimary)};
+  cursor: ${(p) => (p.disabled ? "default" : "pointer")};
+  border: none;
+`;
+
+const PageNumbers = styled.div`
+  display: flex;
+  gap: ${spacing.xs}px;
+`;
+
+const PageNumber = styled.div`
+  padding: 6px 10px;
+  border-radius: ${radius.md}px;
+  cursor: pointer;
+  background: ${(p) => (p.$active ? colors.primary : colors.white)};
+  color: ${(p) => (p.$active ? colors.textOnPrimary : colors.textPrimary)};
+  border: 1px solid ${colors.bgPaper};
+`;
+
+const Ellipsis = styled.div`
+  padding: 6px 10px;
+  color: ${colors.textSecondary};
+`;
+
+const StoreMetaWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+`;
+
+const MetaLine = styled.div`
+  font-size: 13px;
+  color: #6b7280; /* text-muted */
+`;
+
+const MetaDate = styled.div`
+  font-size: 12px;
+  color: #9ca3af; /* 더 흐린 텍스트 */
+`;

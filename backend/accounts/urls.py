@@ -16,4 +16,5 @@ urlpatterns = [
     path("owner-profile/", OwnerProfileView.as_view()),
     path("consumer-login/", ConsumerLoginView.as_view(), name="consumer-login"),
     path("me/", MeView.as_view(), name="me"),
+    path("check-username/", CheckUsernameView.as_view(), name="check-username"),
 ]

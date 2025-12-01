@@ -17,3 +17,4 @@
 export { default } from "./Card";
 export { default as ClickableCard } from "./ClickableCard";
 export { default as SectionCard } from "./SectionCard";
+export { default as SoftSectionCard } from "./SoftSectionCard";

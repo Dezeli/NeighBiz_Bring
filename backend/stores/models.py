@@ -20,7 +20,7 @@ class Store(models.Model):
     )
 
     description = models.TextField(blank=True, null=True)
-    image_url = models.URLField(blank=True, null=True)
+    image_url = models.CharField(max_length=500, blank=True, null=True)
 
     
     business_hours = models.JSONField(default=dict)

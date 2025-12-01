@@ -1,16 +1,10 @@
-// src/pages/owner/auth/OwnerLoginPage.jsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import styled from "styled-components";
 
 import api from "../../../utils/api";
 import { useAuth } from "../../../context/AuthContext";
-
-// Layout
 import MobileShell from "../../../design/layout/MobileShell";
 import PageContainer from "../../../design/layout/PageContainer";
-
-// UI Components
 import {
   Input,
   PrimaryButton,
@@ -20,11 +14,8 @@ import {
   Row,
   Spacer,
   Hero,
+  ErrorBox,
 } from "../../../design/components";
-
-// Tokens (moved to top to satisfy ESLint)
-import { colors } from "../../../design/tokens/colors";
-import { spacing } from "../../../design/tokens/spacing";
 
 export default function OwnerLoginPage() {
   const [username, setUsername] = useState("");
@@ -64,6 +55,19 @@ export default function OwnerLoginPage() {
     if (e) e.preventDefault();
 
     setError("");
+
+    // Client-side Validation
+    if (!username.trim()) {
+      setError("아이디를 입력하세요.");
+      return;
+    }
+
+    if (!password.trim()) {
+      setError("비밀번호를 입력하세요.");
+      return;
+    }
+
+    // API Call
     setIsLoading(true);
 
     try {
@@ -80,18 +84,20 @@ export default function OwnerLoginPage() {
 
       const { access, refresh } = res.data.data;
       await login(access, refresh);
-
       navigate("/owner/profile");
+
     } catch (err) {
       if (err.response?.data) {
         setError(err.response.data.message || "로그인에 실패했습니다.");
       } else {
         setError("로그인에 실패했습니다. 네트워크를 확인해주세요.");
       }
+
     } finally {
       setIsLoading(false);
     }
   };
+
 
   return (
     <MobileShell>
@@ -154,17 +160,3 @@ export default function OwnerLoginPage() {
     </MobileShell>
   );
 }
-
-// ------------------------------------------------
-// Styles
-// ------------------------------------------------
-const ErrorBox = styled.div`
-  width: 100%;
-  margin-top: ${spacing.sm}px;
-
-  padding: ${spacing.sm}px ${spacing.md}px;
-  background: ${colors.errorLight};
-  color: ${colors.error};
-  border-radius: 8px;
-  font-size: 14px;
-`;

@@ -1,6 +1,8 @@
 export { default as PrimaryButton } from "./PrimaryButton";
 export { default as GhostButton } from "./GhostButton";
 export { default as SubtleButton } from "./SubtleButton";
+export { default as SettingButton } from "./SettingButton";
+export { default as DangerButton } from "./DangerButton";
 
 
 /*

@@ -1,3 +1,4 @@
+import re
 from rest_framework import serializers
 from django.db import transaction
 from .models import OwnerUser, OwnerRefreshToken, ConsumerRefreshToken, ConsumerUser, PhoneVerification
@@ -382,3 +383,21 @@ class OwnerProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = OwnerUser
         fields = ["id", "username", "name", "phone", "created_at", "is_verified"]
+
+
+
+class CheckUsernameSerializer(serializers.Serializer):
+    username = serializers.CharField()
+
+    def validate_username(self, username):
+        username = username.strip()
+
+        if not username:
+            raise serializers.ValidationError("아이디를 입력해주세요.")
+
+        if not re.match(r"^[a-zA-Z0-9]{4,20}$", username):
+            raise serializers.ValidationError(
+                "아이디 형식이 올바르지 않습니다. (영문/숫자 4~20자)"
+            )
+
+        return username

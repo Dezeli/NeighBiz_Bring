@@ -91,7 +91,7 @@ function App() {
         }
       />
       <Route
-        path="/owner/stats"
+        path="/owner/stats/:slug"
         element={
           <PrivateRoute isAuthenticated={isAuthenticated} loading={loading}>
             <OwnerStatsPage />

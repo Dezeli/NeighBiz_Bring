@@ -7,4 +7,5 @@ urlpatterns = [
     path('action/<int:pk>/', ProposalActionView.as_view(), name='proposal-action'),
     path("qr-image/", QRCodeView.as_view(), name="qr-code-image"),
     path("proposals/", MyProposalsView.as_view(), name="my-proposals"),
+    path("stats/", PartnershipStatsView.as_view()),
 ]

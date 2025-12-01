@@ -15,13 +15,46 @@ class CouponPolicyAdmin(admin.ModelAdmin):
 @admin.register(Coupon)
 class CouponAdmin(admin.ModelAdmin):
     list_display = (
-        "id", "short_code", "user", "store_name", "status",
-         "issued_at", "used_at", "expired_at"
+        "id",
+        "short_code",
+        "user",
+        "partnership_name",
+        "policy_store_name",
+        "status",
+        "issued_at",
+        "used_at",
+        "expired_at",
     )
-    list_filter = ("status", "issued_at", "used_at", "expired_at")
-    search_fields = ("short_code", "user__phone_number", "policy__store__name")
+    list_filter = (
+        "status",
+        "issued_at",
+        "used_at",
+        "expired_at",
+        "partnership_slug",
+    )
+    search_fields = (
+        "short_code",
+        "user__phone_number",
+        "policy__store__name",
+        "partnership_slug",
+    )
     ordering = ("-issued_at",)
 
-    def store_name(self, obj):
+    def partnership_name(self, obj):
+        from partnerships.models import Partnership
+
+        p = Partnership.objects.filter(
+            slug_for_a=obj.partnership_slug
+        ).first() or Partnership.objects.filter(
+            slug_for_b=obj.partnership_slug
+        ).first()
+
+        if p:
+            return f"{p.store_a.name} ↔ {p.store_b.name}"
+
+        return "(제휴 없음)"
+    partnership_name.short_description = "제휴"
+
+    def policy_store_name(self, obj):
         return obj.policy.store.name
-    store_name.short_description = "가맹점"
+    policy_store_name.short_description = "정책 가맹점"
